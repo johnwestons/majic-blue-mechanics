@@ -47,7 +47,9 @@ $expected = [ordered]@{
 }
 
 foreach ($bike in @('naked-black', 'vintage-red-standard', 'black-classic',
-        'red-supersport', 'adventure-silver-red', 'red-vtwin-cruiser')) {
+        'red-supersport', 'adventure-silver-red', 'red-vtwin-cruiser',
+        'adventure-blue-white', 'ural-tan-classic', 'bmw-r24-vintage',
+        'modern-gray-cruiser')) {
     $expected["assets\motorcycles\$bike-service.png"] = @(256, 256)
     $expected["assets\motorcycles\$bike-mounted.png"] = @(256, 256)
 }

@@ -81,6 +81,22 @@ local Config = {
                 service = "assets/motorcycles/red-vtwin-cruiser-service.png",
                 mounted = "assets/motorcycles/red-vtwin-cruiser-mounted.png",
             },
+            adventureBlueWhite = {
+                service = "assets/motorcycles/adventure-blue-white-service.png",
+                mounted = "assets/motorcycles/adventure-blue-white-mounted.png",
+            },
+            uralTanClassic = {
+                service = "assets/motorcycles/ural-tan-classic-service.png",
+                mounted = "assets/motorcycles/ural-tan-classic-mounted.png",
+            },
+            bmwR24Vintage = {
+                service = "assets/motorcycles/bmw-r24-vintage-service.png",
+                mounted = "assets/motorcycles/bmw-r24-vintage-mounted.png",
+            },
+            modernGrayCruiser = {
+                service = "assets/motorcycles/modern-gray-cruiser-service.png",
+                mounted = "assets/motorcycles/modern-gray-cruiser-mounted.png",
+            },
         },
     },
     characters = {

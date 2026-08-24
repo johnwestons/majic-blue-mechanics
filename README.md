@@ -12,7 +12,7 @@ A playable LÖVE 2D vertical slice for an isometric motorcycle-mechanic shop gam
 6. Diagnose it, buy/install the required parts, and complete the road test.
 7. Collect payment, build reputation, and take the next customer.
 
-The work-order rotation now covers six bikes: a modern naked bike, an old-school V-twin standard, a classic cruiser, a red supersport, an adventure bike, and a V-twin cruiser. Each has a clean service-bay sprite plus a diagonal mounted sprite for the lift.
+The work-order rotation now covers ten bikes: modern and classic standards, cruisers, supersports, two adventure bikes, a Ural solo, and a vintage BMW. Each has a clean service-bay sprite plus a diagonal mounted sprite for the lift.
 
 The runtime workshop is the regenerated mechanic-shop layout in
 `assets/workshop/workshop-layout-v2.png`; it keeps the original Picture Shop

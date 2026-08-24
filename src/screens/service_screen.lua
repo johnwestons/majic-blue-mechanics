@@ -22,7 +22,8 @@ function ServiceScreen.draw(state, assets, mouseX, mouseY)
         return
     end
 
-    local bike = assets.get("motorcycleSide")
+    local bike = job.bikeKey and assets.get("motorcycleService_" .. job.bikeKey)
+    bike = bike or assets.get("motorcycleSide")
     if bike then
         love.graphics.setColor(1, 1, 1)
         local previewScale = bike:getWidth() > 200 and 0.85 or 1.55

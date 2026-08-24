@@ -46,6 +46,12 @@ $expected = [ordered]@{
     'assets\characters\mechanic-raccoon\use.png' = @(1536, 512)
 }
 
+foreach ($bike in @('naked-black', 'vintage-red-standard', 'black-classic',
+        'red-supersport', 'adventure-silver-red', 'red-vtwin-cruiser')) {
+    $expected["assets\motorcycles\$bike-service.png"] = @(256, 256)
+    $expected["assets\motorcycles\$bike-mounted.png"] = @(256, 256)
+}
+
 foreach ($character in @('business-dragon', 'business-fox', 'business-cat')) {
     $expected["assets\characters\$character\idle.png"] = @(1024, 512)
     $expected["assets\characters\$character\walk.png"] = @(2048, 512)
@@ -60,7 +66,10 @@ foreach ($entry in $expected.GetEnumerator()) {
     $dimensionPassed = $info.width -eq $entry.Value[0] -and $info.height -eq $entry.Value[1]
     Add-Check "dimensions:$($entry.Key)" $dimensionPassed `
         "expected $($entry.Value[0])x$($entry.Value[1]); got $($info.width)x$($info.height)"
-    if ($entry.Key -like 'assets\characters\*' -or $entry.Key -eq 'assets\motorcycles\gsxr-600-service.png') {
+    if ($entry.Key -like 'assets\characters\*' -or
+        $entry.Key -eq 'assets\motorcycles\gsxr-600-service.png' -or
+        $entry.Key -like 'assets\motorcycles\*-service.png' -or
+        $entry.Key -like 'assets\motorcycles\*-mounted.png') {
         $alphaPassed = $info.pixelFormat -match 'Alpha|Argb|PArgb'
         Add-Check "alpha:$($entry.Key)" $alphaPassed "pixel format is $($info.pixelFormat)"
     }

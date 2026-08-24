@@ -45,6 +45,10 @@ function Assets.load()
     loadImage("motorcycleSide", Config.paths.motorcycleSide)
     loadImage("motorcyclePoster", Config.paths.motorcyclePoster)
     loadImage("motorcycleAction", Config.paths.motorcycleAction)
+    for key, paths in pairs(Config.paths.motorcycles or {}) do
+        loadImage("motorcycleService_" .. key, paths.service)
+        loadImage("motorcycleMounted_" .. key, paths.mounted)
+    end
 
     local workshop, walkmask = Assets.images.workshop, Assets.data.walkmask
     if workshop and walkmask then

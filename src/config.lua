@@ -56,6 +56,32 @@ local Config = {
         motorcycleSide = "assets/motorcycles/gsxr-600-service.png",
         motorcyclePoster = "assets/motorcycles/gsxr-600-poster.png",
         motorcycleAction = "assets/motorcycles/gsxr-600-action.png",
+        motorcycles = {
+            nakedBlack = {
+                service = "assets/motorcycles/naked-black-service.png",
+                mounted = "assets/motorcycles/naked-black-mounted.png",
+            },
+            vintageRedStandard = {
+                service = "assets/motorcycles/vintage-red-standard-service.png",
+                mounted = "assets/motorcycles/vintage-red-standard-mounted.png",
+            },
+            blackClassic = {
+                service = "assets/motorcycles/black-classic-service.png",
+                mounted = "assets/motorcycles/black-classic-mounted.png",
+            },
+            redSupersport = {
+                service = "assets/motorcycles/red-supersport-service.png",
+                mounted = "assets/motorcycles/red-supersport-mounted.png",
+            },
+            adventureSilverRed = {
+                service = "assets/motorcycles/adventure-silver-red-service.png",
+                mounted = "assets/motorcycles/adventure-silver-red-mounted.png",
+            },
+            redVtwinCruiser = {
+                service = "assets/motorcycles/red-vtwin-cruiser-service.png",
+                mounted = "assets/motorcycles/red-vtwin-cruiser-mounted.png",
+            },
+        },
     },
     characters = {
         ["mechanic-raccoon"] = {

@@ -12,6 +12,9 @@ Source workspace: `C:\Users\johnw\OneDrive\Documents\ChatGPT\The Picture Shop`
 - `assets/characters/business-{dragon,fox,cat}/{idle,walk,sit}.png` ← matching approved client strips under `assets/generated/characters/`
 - `assets/motorcycles/gsxr-600-{side,poster,action}.png` ← matching starter images under `assets/generated/artwork/` (retained as references)
 - `assets/motorcycles/gsxr-600-service.png` ← ImageGen transparent GSX-R service sprite, normalized to the project's 256×256 transparent-sprite contract by `tools/normalize_transparent_sprite.ps1`
+- `assets/motorcycles/{naked-black,vintage-red-standard,black-classic,red-supersport,adventure-silver-red,red-vtwin-cruiser}-service.png` ← generated service-view motorcycle sprites based on the six user-provided motorcycle references
+- `assets/motorcycles/{naked-black,vintage-red-standard,black-classic,red-supersport,adventure-silver-red,red-vtwin-cruiser}-mounted.png` ← matching rotated three-quarter mounted sprites generated against the user-provided red service-lift reference (`codex-clipboard-025fdad4-e6ce-4e32-b657-0fc33bb67c7c.png`)
+- Each new sprite is alpha-cleaned with `tools/remove_checkerboard_background.ps1`, then cropped and nearest-neighbor normalized to 256×256. The lift is intentionally not baked into the mounted sprite; the workshop background supplies it while the unchanged walkmask supplies navigation.
 
 The original warehouse art remains in the repo as a fallback/reference. The v2 runtime layout is the mechanic-shop edit: it adds service lifts, tire racks, tool walls, parts shelves, oil storage, workbenches, and a reception counter while preserving the existing walkmask dimensions and alignment.
 

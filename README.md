@@ -12,13 +12,15 @@ A playable LÖVE 2D vertical slice for an isometric motorcycle-mechanic shop gam
 6. Diagnose it, buy/install the required parts, and complete the road test.
 7. Collect payment, build reputation, and take the next customer.
 
-The first work-order rotation includes oil/filter service, a front-brake overhaul, chain and sprocket replacement, and charging-system diagnosis.
+The work-order rotation now covers six bikes: a modern naked bike, an old-school V-twin standard, a classic cruiser, a red supersport, an adventure bike, and a V-twin cruiser. Each has a clean service-bay sprite plus a diagonal mounted sprite for the lift.
 
 The runtime workshop is the regenerated mechanic-shop layout in
 `assets/workshop/workshop-layout-v2.png`; it keeps the original Picture Shop
-walkmask unchanged. The starter GSX-R is the transparent production sprite in
-`assets/motorcycles/gsxr-600-service.png`, with the high-resolution generated
-source retained beside it for future sprite variants.
+walkmask unchanged. The original GSX-R remains as a fallback/reference in
+`assets/motorcycles/gsxr-600-service.png`. The new production set lives in
+`assets/motorcycles/*-service.png` and `assets/motorcycles/*-mounted.png`, with
+high-resolution generated and alpha-cleaned sources retained under
+`assets/motorcycles/source/`.
 
 ## Run on Windows
 
@@ -47,5 +49,6 @@ The game owns three versioned local slots under the LÖVE save directory. A pend
 - `RUN_SMOKE_TEST.bat` runs deterministic work-order, economy, navigation, asset, customer-route, and three-frame render checks.
 - `tools/asset_doctor.ps1` validates required dimensions, alpha-capable character sheets, workshop/mask alignment, and a strict black/white walkmask.
 - `tools/normalize_transparent_sprite.ps1` crops a generated transparent motorcycle to the project's square sprite contract without adding a floor shadow.
+- `tools/remove_checkerboard_background.ps1` removes generated checkerboard preview pixels before normalization.
 
 See `docs/coding_conventions.md`, `docs/source_control.md`, and `docs/asset_provenance.md` for the inherited project rules and exact sister-project sources.

@@ -6,12 +6,14 @@ The user explicitly authorized this sister game to reuse tools, code, and assets
 
 Source workspace: `C:\Users\johnw\OneDrive\Documents\ChatGPT\The Picture Shop`
 
-- `assets/workshop/workshop-layout.png` ← `assets/generated/warehouse-layout-final.png`
+- `assets/workshop/workshop-layout.png` ← `assets/generated/warehouse-layout-final.png` (preserved baseline)
+- `assets/workshop/workshop-layout-v2.png` ← ImageGen edit of the preserved workshop layout, with the same walls, doorways, floor boundary, and camera framing but mechanic-shop equipment added
 - `assets/workshop/workshop-walkmask.png` ← `assets/generated/warehouse-layout-final-walkmask.png`
 - `assets/characters/business-{dragon,fox,cat}/{idle,walk,sit}.png` ← matching approved client strips under `assets/generated/characters/`
-- `assets/motorcycles/gsxr-600-{side,poster,action}.png` ← matching images under `assets/generated/artwork/`
+- `assets/motorcycles/gsxr-600-{side,poster,action}.png` ← matching starter images under `assets/generated/artwork/` (retained as references)
+- `assets/motorcycles/gsxr-600-service.png` ← ImageGen transparent GSX-R service sprite, normalized to the project's 256×256 transparent-sprite contract by `tools/normalize_transparent_sprite.ps1`
 
-The workshop art is the approved Picture Shop warehouse shell. For this initial sister-game baseline it functions as the garage/workshop: loading door, office, customer lounge, and open service floor. A later art pass can add lifts, tire machines, benches, and parts storage while preserving the mask contract.
+The original warehouse art remains in the repo as a fallback/reference. The v2 runtime layout is the mechanic-shop edit: it adds service lifts, tire racks, tool walls, parts shelves, oil storage, workbenches, and a reception counter while preserving the existing walkmask dimensions and alignment.
 
 ## From Mouse Frontier 8.10
 

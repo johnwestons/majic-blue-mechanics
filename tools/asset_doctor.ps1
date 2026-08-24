@@ -36,9 +36,9 @@ function Get-ImageInfo {
 }
 
 $expected = [ordered]@{
-    'assets\workshop\workshop-layout.png' = @(1536, 1024)
+    'assets\workshop\workshop-layout-v2.png' = @(1536, 1024)
     'assets\workshop\workshop-walkmask.png' = @(1536, 1024)
-    'assets\motorcycles\gsxr-600-side.png' = @(128, 128)
+    'assets\motorcycles\gsxr-600-service.png' = @(256, 256)
     'assets\motorcycles\gsxr-600-poster.png' = @(128, 128)
     'assets\motorcycles\gsxr-600-action.png' = @(128, 128)
     'assets\characters\mechanic-raccoon\idle.png' = @(1024, 512)
@@ -60,13 +60,13 @@ foreach ($entry in $expected.GetEnumerator()) {
     $dimensionPassed = $info.width -eq $entry.Value[0] -and $info.height -eq $entry.Value[1]
     Add-Check "dimensions:$($entry.Key)" $dimensionPassed `
         "expected $($entry.Value[0])x$($entry.Value[1]); got $($info.width)x$($info.height)"
-    if ($entry.Key -like 'assets\characters\*') {
+    if ($entry.Key -like 'assets\characters\*' -or $entry.Key -eq 'assets\motorcycles\gsxr-600-service.png') {
         $alphaPassed = $info.pixelFormat -match 'Alpha|Argb|PArgb'
         Add-Check "alpha:$($entry.Key)" $alphaPassed "pixel format is $($info.pixelFormat)"
     }
 }
 
-$layout = $imageInfo['assets\workshop\workshop-layout.png']
+$layout = $imageInfo['assets\workshop\workshop-layout-v2.png']
 $mask = $imageInfo['assets\workshop\workshop-walkmask.png']
 if ($layout -and $mask) {
     Add-Check 'workshop-mask-alignment' `

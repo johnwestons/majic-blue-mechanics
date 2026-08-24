@@ -14,6 +14,7 @@ These boundaries deliberately carry forward the proven Picture Shop and Mouse Fr
 - `src/jobs.lua` remains a pure domain module. It must not read game state or draw.
 - New gameplay requires a deterministic smoke-test checkpoint before it is considered stable.
 - Reference/source assets are never overwritten during preparation. Promoted runtime assets receive stable filenames and provenance notes.
+- Generated transparent motorcycle art is normalized through `tools/normalize_transparent_sprite.ps1` before runtime use; source-resolution renders remain beside the promoted sprite.
 - Do not draw artificial circular or elliptical shadows beneath sprites. Collision footprints follow visible floor contact, not the full PNG canvas.
 
 ## Module map

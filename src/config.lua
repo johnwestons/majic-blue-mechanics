@@ -39,19 +39,21 @@ local Config = {
     },
     interactables = {
         computer = { x = 500, y = 185, radius = 62 },
-        serviceBay = { x = 390, y = 430, radius = 86 },
+        -- The regenerated shop has two service lifts. The left lift is the
+        -- starter bay and is kept on the original walkmask's floor area.
+        serviceBay = { x = 300, y = 336, radius = 86 },
     },
     serviceBay = {
-        bikeX = 390,
-        bikeY = 438,
-        bikeScale = 1.45,
+        bikeX = 300,
+        bikeY = 336,
+        bikeScale = 0.72,
         collisionHalfWidth = 74,
         collisionHalfHeight = 20,
     },
     paths = {
-        workshop = "assets/workshop/workshop-layout.png",
+        workshop = "assets/workshop/workshop-layout-v2.png",
         walkmask = "assets/workshop/workshop-walkmask.png",
-        motorcycleSide = "assets/motorcycles/gsxr-600-side.png",
+        motorcycleSide = "assets/motorcycles/gsxr-600-service.png",
         motorcyclePoster = "assets/motorcycles/gsxr-600-poster.png",
         motorcycleAction = "assets/motorcycles/gsxr-600-action.png",
     },

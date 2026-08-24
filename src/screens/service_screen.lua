@@ -25,7 +25,8 @@ function ServiceScreen.draw(state, assets, mouseX, mouseY)
     local bike = assets.get("motorcycleSide")
     if bike then
         love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(bike, 152, 120, 0, 1.55, 1.55)
+        local previewScale = bike:getWidth() > 200 and 0.85 or 1.55
+        love.graphics.draw(bike, 152, 120, 0, previewScale, previewScale)
     end
     Ui.label(string.format("%d %s %s", job.bike.year, job.bike.make, job.bike.model),
         386, 120, 410, { 0.90, 0.84, 0.57 })

@@ -14,6 +14,12 @@ A playable LÖVE 2D vertical slice for an isometric motorcycle-mechanic shop gam
 
 The first work-order rotation includes oil/filter service, a front-brake overhaul, chain and sprocket replacement, and charging-system diagnosis.
 
+The runtime workshop is the regenerated mechanic-shop layout in
+`assets/workshop/workshop-layout-v2.png`; it keeps the original Picture Shop
+walkmask unchanged. The starter GSX-R is the transparent production sprite in
+`assets/motorcycles/gsxr-600-service.png`, with the high-resolution generated
+source retained beside it for future sprite variants.
+
 ## Run on Windows
 
 1. Install LÖVE 11.x from <https://love2d.org/>.
@@ -40,5 +46,6 @@ The game owns three versioned local slots under the LÖVE save directory. A pend
 
 - `RUN_SMOKE_TEST.bat` runs deterministic work-order, economy, navigation, asset, customer-route, and three-frame render checks.
 - `tools/asset_doctor.ps1` validates required dimensions, alpha-capable character sheets, workshop/mask alignment, and a strict black/white walkmask.
+- `tools/normalize_transparent_sprite.ps1` crops a generated transparent motorcycle to the project's square sprite contract without adding a floor shadow.
 
 See `docs/coding_conventions.md`, `docs/source_control.md`, and `docs/asset_provenance.md` for the inherited project rules and exact sister-project sources.

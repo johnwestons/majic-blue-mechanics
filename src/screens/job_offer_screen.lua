@@ -12,8 +12,9 @@ function JobOfferScreen.draw(state, assets, mouseX, mouseY)
 
     local art = assets.get(job.artwork) or assets.get("motorcyclePoster")
     if art then
+        local artScale = art:getWidth() > 200 and 0.70 or 1.35
         love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(art, 154, 132, 0, 1.35, 1.35)
+        love.graphics.draw(art, 154, 132, 0, artScale, artScale)
     end
     Ui.label(job.owner, 350, 120, 450, { 0.90, 0.84, 0.57 })
     Ui.label(job.company, 350, 144, 450, { 0.68, 0.78, 0.77 })

@@ -11,7 +11,7 @@ local templates = {
         diagnosis = "Oil is worn and the filter is restricted; no metal found.",
         parts = { "4 qt synthetic oil", "oil filter", "drain washer" },
         partsCost = 72, labor = 180, difficulty = "Routine", hours = 1.2,
-        artwork = "motorcyclePoster",
+        artwork = "motorcycleSide",
     },
     {
         owner = "Dax Ember", company = "Ember Track Days",
@@ -21,7 +21,7 @@ local templates = {
         diagnosis = "Front pads are glazed and the fluid contains moisture.",
         parts = { "front brake pads", "DOT 4 fluid", "caliper seals" },
         partsCost = 164, labor = 360, difficulty = "Skilled", hours = 2.8,
-        artwork = "motorcycleAction",
+        artwork = "motorcycleSide",
     },
     {
         owner = "Toby Copper", company = "Copper Trail Club",
@@ -41,7 +41,7 @@ local templates = {
         diagnosis = "Stator output is low and the connector shows heat damage.",
         parts = { "replacement stator", "stator gasket", "connector kit" },
         partsCost = 286, labor = 510, difficulty = "Advanced", hours = 3.7,
-        artwork = "motorcyclePoster",
+        artwork = "motorcycleSide",
     },
 }
 

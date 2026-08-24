@@ -157,20 +157,11 @@ end
 
 local function drawServiceLift(job)
     local x, y = Config.serviceBay.bikeX, Config.serviceBay.bikeY
-    love.graphics.setColor(0.08, 0.10, 0.11, 0.96)
-    love.graphics.polygon("fill", x - 92, y + 10, x + 70, y + 10,
-        x + 94, y + 24, x - 68, y + 24)
-    love.graphics.setColor(0.32, 0.37, 0.40)
-    love.graphics.polygon("line", x - 92, y + 10, x + 70, y + 10,
-        x + 94, y + 24, x - 68, y + 24)
-    love.graphics.setColor(0.94, 0.72, 0.18)
-    love.graphics.rectangle("fill", x - 78, y + 13, 46, 3)
-    love.graphics.rectangle("fill", x + 35, y + 13, 36, 3)
     if job then
         love.graphics.setColor(0.05, 0.07, 0.08, 0.92)
-        love.graphics.rectangle("fill", x - 62, y + 27, 124, 24, 3, 3)
+        love.graphics.rectangle("fill", x - 62, y + 42, 124, 24, 3, 3)
         love.graphics.setColor(0.91, 0.83, 0.57)
-        love.graphics.printf(job.id .. "  " .. Jobs.stageLabel(job), x - 58, y + 33, 116, "center")
+        love.graphics.printf(job.id .. "  " .. Jobs.stageLabel(job), x - 58, y + 48, 116, "center")
     end
 end
 

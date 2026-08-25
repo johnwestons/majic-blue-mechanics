@@ -158,6 +158,29 @@ function Jobs.createOffer(sequence)
     }
 end
 
+-- Older saves were created before bike-specific sprite keys existed. Resolve
+-- their visual identity from the saved bike data so they still arrive on the
+-- correct lift art instead of falling back to the generic GSX-R.
+function Jobs.bikeKeyFor(job)
+    if type(job) ~= "table" then return nil end
+    if job.bikeKey then return job.bikeKey end
+    if job.bike and job.bike.make == "Suzuki" and job.bike.model == "GSX-R600" then
+        return "redSupersport"
+    end
+    local sequence = tonumber(job.sequence) or 1
+    local template = templates[(sequence - 1) % #templates + 1]
+    return template.bikeKey
+end
+
+function Jobs.ensureBikeSprite(job)
+    local key = Jobs.bikeKeyFor(job)
+    if type(job) == "table" and key then
+        job.bikeKey = key
+        job.artwork = "motorcycleService_" .. key
+    end
+    return key
+end
+
 local function transition(job, expectedStatus, expectedStage, nextStatus, nextStage)
     if type(job) ~= "table" then return false, "job is required" end
     if job.status ~= expectedStatus or job.stage ~= expectedStage then

@@ -1,3 +1,4 @@
+local Jobs = require("src.jobs")
 local State = {}
 
 local function fresh()
@@ -36,6 +37,9 @@ function State.applySave(target, payload)
     target.jobs.active = target.jobs.active or {}
     target.jobs.completed = target.jobs.completed or {}
     target.jobs.declined = target.jobs.declined or {}
+    for _, list in ipairs({ target.jobs.active, target.jobs.completed, target.jobs.declined }) do
+        for _, job in ipairs(list) do Jobs.ensureBikeSprite(job) end
+    end
     target.pendingOffer = nil
     target.selectedJobId = nil
     target.screen = "world"

@@ -36,6 +36,20 @@ local function runChecks(context)
     local offer = context.jobs.createOffer(1)
     check("stable_first_job_id", offer.id == "MBM-0001")
     check("quote_covers_parts", offer.quote > offer.partsCost)
+    for sequence, template in ipairs(context.jobs.templates()) do
+        local rosterOffer = context.jobs.createOffer(sequence)
+        local key = context.jobs.bikeKeyFor(rosterOffer)
+        check("roster_bike_key_" .. sequence, key == template.bikeKey)
+        check("roster_mounted_sprite_" .. sequence,
+            context.assets.get("motorcycleMounted_" .. key) ~= nil)
+    end
+    local legacyJob = {
+        sequence = 1,
+        bike = { make = "Suzuki", model = "GSX-R600" },
+        artwork = "motorcycleSide",
+    }
+    check("legacy_job_bike_migration", context.jobs.ensureBikeSprite(legacyJob) == "redSupersport"
+        and legacyJob.artwork == "motorcycleService_redSupersport")
     local serviceState = context.State.newGame(1)
     serviceState.pendingOffer = offer
     check("accept_work_order", context.jobService.acceptOffer(serviceState))

@@ -22,7 +22,8 @@ function ServiceScreen.draw(state, assets, mouseX, mouseY)
         return
     end
 
-    local bike = job.bikeKey and assets.get("motorcycleService_" .. job.bikeKey)
+    local bikeKey = Jobs.ensureBikeSprite(job)
+    local bike = bikeKey and assets.get("motorcycleService_" .. bikeKey)
     bike = bike or assets.get("motorcycleSide")
     if bike then
         love.graphics.setColor(1, 1, 1)

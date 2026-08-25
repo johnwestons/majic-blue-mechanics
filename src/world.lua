@@ -166,7 +166,8 @@ local function drawServiceLift(job)
 end
 
 local function drawMotorcycle(assets, job)
-    local image = job and job.bikeKey and assets.get("motorcycleMounted_" .. job.bikeKey)
+    local bikeKey = Jobs.ensureBikeSprite(job)
+    local image = bikeKey and assets.get("motorcycleMounted_" .. bikeKey)
     image = image or assets.get("motorcycleSide")
     if not image or not job then return end
     love.graphics.setColor(1, 1, 1)

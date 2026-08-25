@@ -48,7 +48,10 @@ end
 
 function JobService.currentJob(state)
     for _, job in ipairs(state.jobs.active) do
-        if Jobs.isActive(job) then return job end
+        if Jobs.isActive(job) then
+            Jobs.ensureBikeSprite(job)
+            return job
+        end
     end
 end
 

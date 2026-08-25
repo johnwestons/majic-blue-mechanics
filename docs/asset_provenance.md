@@ -17,6 +17,7 @@ Source workspace: `C:\Users\johnw\OneDrive\Documents\ChatGPT\The Picture Shop`
 - `assets/motorcycles/{adventure-blue-white,ural-tan-classic,bmw-r24-vintage,modern-gray-cruiser}-service.png` ← additional generated service-view sprites based on the next four user-provided motorcycle references
 - `assets/motorcycles/{adventure-blue-white,ural-tan-classic,bmw-r24-vintage,modern-gray-cruiser}-mounted.png` ← matching rotated three-quarter mounted sprites using the same lift-angle reference
 - Each new sprite is alpha-cleaned with `tools/remove_checkerboard_background.ps1`, then cropped and nearest-neighbor normalized to 256×256. The lift is intentionally not baked into the mounted sprite; the workshop background supplies it while the unchanged walkmask supplies navigation.
+- `assets/tools/diagnostic-reader-frame-01.png` through `frame-04.png` ← ImageGen four-frame handheld motorcycle code-reader animation strip. The form follows real motorcycle scan tools with a wide screen, four-way keypad, and dedicated confirm/back controls; the raw strip is retained at `assets/tools/source/diagnostic-reader-strip-generated.png`.
 
 The original warehouse art remains in the repo as a fallback/reference. The v2 runtime layout is the mechanic-shop edit: it adds service lifts, tire racks, tool walls, parts shelves, oil storage, workbenches, and a reception counter while preserving the existing walkmask dimensions and alignment.
 

@@ -56,6 +56,12 @@ local Config = {
         motorcycleSide = "assets/motorcycles/gsxr-600-service.png",
         motorcyclePoster = "assets/motorcycles/gsxr-600-poster.png",
         motorcycleAction = "assets/motorcycles/gsxr-600-action.png",
+        diagnosticReader = {
+            "assets/tools/diagnostic-reader-frame-01.png",
+            "assets/tools/diagnostic-reader-frame-02.png",
+            "assets/tools/diagnostic-reader-frame-03.png",
+            "assets/tools/diagnostic-reader-frame-04.png",
+        },
         motorcycles = {
             nakedBlack = {
                 service = "assets/motorcycles/naked-black-service.png",

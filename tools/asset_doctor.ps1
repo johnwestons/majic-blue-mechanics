@@ -41,6 +41,10 @@ $expected = [ordered]@{
     'assets\motorcycles\gsxr-600-service.png' = @(256, 256)
     'assets\motorcycles\gsxr-600-poster.png' = @(128, 128)
     'assets\motorcycles\gsxr-600-action.png' = @(128, 128)
+    'assets\tools\diagnostic-reader-frame-01.png' = @(256, 256)
+    'assets\tools\diagnostic-reader-frame-02.png' = @(256, 256)
+    'assets\tools\diagnostic-reader-frame-03.png' = @(256, 256)
+    'assets\tools\diagnostic-reader-frame-04.png' = @(256, 256)
     'assets\characters\mechanic-raccoon\idle.png' = @(1024, 512)
     'assets\characters\mechanic-raccoon\walk.png' = @(3072, 512)
     'assets\characters\mechanic-raccoon\use.png' = @(1536, 512)
@@ -71,7 +75,8 @@ foreach ($entry in $expected.GetEnumerator()) {
     if ($entry.Key -like 'assets\characters\*' -or
         $entry.Key -eq 'assets\motorcycles\gsxr-600-service.png' -or
         $entry.Key -like 'assets\motorcycles\*-service.png' -or
-        $entry.Key -like 'assets\motorcycles\*-mounted.png') {
+        $entry.Key -like 'assets\motorcycles\*-mounted.png' -or
+        $entry.Key -like 'assets\tools\diagnostic-reader-frame-*.png') {
         $alphaPassed = $info.pixelFormat -match 'Alpha|Argb|PArgb'
         Add-Check "alpha:$($entry.Key)" $alphaPassed "pixel format is $($info.pixelFormat)"
     }

@@ -57,10 +57,12 @@ local function runChecks(context)
     miniState.selectedJobId = miniOffer.id
     check("repair_minigame_starts", context.repairMinigameScreen.begin(miniState, "diagnose"))
     local miniTask = miniState.repairMinigame
-    context.repairMinigameScreen.mousepressed(miniState, miniTask.tokenX, miniTask.tokenY)
-    context.repairMinigameScreen.mousemoved(miniState, miniTask.targetX, miniTask.targetY)
-    check("repair_minigame_accepts_drop",
-        context.repairMinigameScreen.mousereleased(miniState, miniTask.targetX, miniTask.targetY) == "diagnose")
+    local diagnosticAction
+    for _ = 1, 4 do
+        diagnosticAction = context.repairMinigameScreen.pressButton(miniState, "ok") or diagnosticAction
+    end
+    check("diagnostic_reader_accepts_buttons", diagnosticAction == "diagnose"
+        and miniTask.reader.step == 3)
     local serviceState = context.State.newGame(1)
     serviceState.pendingOffer = offer
     check("accept_work_order", context.jobService.acceptOffer(serviceState))
@@ -108,6 +110,9 @@ local function runChecks(context)
     elseif preview == "service" then
         context.state.selectedJobId = renderOffer.id
         context.state.screen = "service"
+    elseif preview == "diagnostic" then
+        context.state.selectedJobId = renderOffer.id
+        context.repairMinigameScreen.begin(context.state, "diagnose")
     elseif preview == "computer" then
         context.state.screen = "computer"
     else

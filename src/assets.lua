@@ -45,6 +45,9 @@ function Assets.load()
     loadImage("motorcycleSide", Config.paths.motorcycleSide)
     loadImage("motorcyclePoster", Config.paths.motorcyclePoster)
     loadImage("motorcycleAction", Config.paths.motorcycleAction)
+    for index, path in ipairs(Config.paths.diagnosticReader or {}) do
+        loadImage("diagnosticReader" .. string.format("%02d", index), path)
+    end
     for key, paths in pairs(Config.paths.motorcycles or {}) do
         loadImage("motorcycleService_" .. key, paths.service)
         loadImage("motorcycleMounted_" .. key, paths.mounted)

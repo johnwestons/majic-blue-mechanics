@@ -14,6 +14,8 @@ A playable LÖVE 2D vertical slice for an isometric motorcycle-mechanic shop gam
 
 The work-order rotation now covers ten bikes: modern and classic standards, cruisers, supersports, two adventure bikes, a Ural solo, and a vintage BMW. Each has a clean service-bay sprite plus a diagonal mounted sprite for the lift.
 
+Diagnosis now opens a handheld code-reader mini-game: power it on, run the ECU scan, and confirm the displayed fault before the work order advances. Repair and road-test actions retain their matching movable-part mini-games.
+
 The runtime workshop is the regenerated mechanic-shop layout in
 `assets/workshop/workshop-layout-v2.png`; it keeps the original Picture Shop
 walkmask unchanged. The original GSX-R remains as a fallback/reference in
@@ -50,5 +52,6 @@ The game owns three versioned local slots under the LÖVE save directory. A pend
 - `tools/asset_doctor.ps1` validates required dimensions, alpha-capable character sheets, workshop/mask alignment, and a strict black/white walkmask.
 - `tools/normalize_transparent_sprite.ps1` crops a generated transparent motorcycle to the project's square sprite contract without adding a floor shadow.
 - `tools/remove_checkerboard_background.ps1` removes generated checkerboard preview pixels before normalization.
+- `tools/split_alpha_sprite_strip.ps1` splits the four-frame diagnostic-reader render into the runtime's 256×256 animation frames.
 
 See `docs/coding_conventions.md`, `docs/source_control.md`, and `docs/asset_provenance.md` for the inherited project rules and exact sister-project sources.

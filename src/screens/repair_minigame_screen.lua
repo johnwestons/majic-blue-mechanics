@@ -24,6 +24,14 @@ local targetLocations = {
     magneto = { x = 350, y = 340 }, coolant = { x = 390, y = 270 },
 }
 
+local faultCodes = {
+    oil = "P0524", brake = "C1234", chain = "P0722", stator = "P0562",
+    suspension = "C1513", belt = "P0505", spoke = "C0040", carb = "P0171",
+    magneto = "P0351", coolant = "P0217", tool = "P0000",
+}
+
+local readerLayout = { x = 530, y = 145, scale = 1.08 }
+
 local function serviceKind(job)
     local service = string.lower((job and job.service) or "")
     local partText = string.lower(table.concat((job and job.parts) or {}, " "))
@@ -39,7 +47,7 @@ local function taskFor(job, action)
     local target = targetLocations[keyword] or { x = 350, y = 300 }
     local label
     if action == "diagnose" then
-        label = "Move the diagnostic probe to the " .. task.location .. "."
+        label = "Press the orange OK button on the code reader to scan this bike."
     elseif action == "repair" then
         label = task.verb .. " at the " .. task.location .. "."
     else
@@ -58,6 +66,12 @@ local function taskFor(job, action)
         startY = 486,
         dragging = false,
         complete = false,
+        reader = action == "diagnose" and {
+            step = 0,
+            menu = 1,
+            faultCode = faultCodes[keyword] or faultCodes.tool,
+            location = task.location,
+        } or nil,
     }
 end
 
@@ -102,9 +116,43 @@ local function targetContains(task, x, y)
         and y >= task.targetY - 42 and y <= task.targetY + 42
 end
 
+local function readerButtonAt(x, y)
+    local px = (x - readerLayout.x) / readerLayout.scale
+    local py = (y - readerLayout.y) / readerLayout.scale
+    if px >= 146 and px <= 207 and py >= 198 and py <= 247 then return "ok" end
+    if px >= 54 and px <= 116 and py >= 198 and py <= 247 then return "back" end
+    if px >= 98 and px <= 159 and py >= 143 and py <= 184 then return "up" end
+    if px >= 98 and px <= 159 and py >= 181 and py <= 218 then return "down" end
+    if px >= 52 and px <= 99 and py >= 157 and py <= 200 then return "left" end
+    if px >= 158 and px <= 207 and py >= 157 and py <= 200 then return "right" end
+end
+
+function RepairMinigameScreen.pressButton(state, button)
+    local task = state.repairMinigame
+    if not task or task.action ~= "diagnose" or not task.reader then return nil end
+    local reader = task.reader
+    if button == "up" then reader.menu = math.max(1, reader.menu - 1) return nil end
+    if button == "down" then reader.menu = math.min(2, reader.menu + 1) return nil end
+    if button == "back" then
+        reader.step = math.max(0, reader.step - 1)
+        return nil
+    end
+    if button == "ok" then
+        if reader.step < 3 then
+            reader.step = reader.step + 1
+            if reader.step == 3 then task.complete = true end
+            return nil
+        end
+        return task.action
+    end
+end
+
 function RepairMinigameScreen.mousepressed(state, x, y)
     local task = state.repairMinigame
     if not task then return false end
+    if task.action == "diagnose" then
+        return RepairMinigameScreen.pressButton(state, readerButtonAt(x, y))
+    end
     if tokenAt(task, x, y) then
         task.dragging = true
         task.grabOffsetX, task.grabOffsetY = x - task.tokenX, y - task.tokenY
@@ -123,6 +171,7 @@ end
 
 function RepairMinigameScreen.mousereleased(state, x, y)
     local task = state.repairMinigame
+    if task and task.action == "diagnose" then return nil end
     if not task or not task.dragging then return nil end
     task.dragging = false
     if targetContains(task, x, y) then
@@ -189,6 +238,62 @@ local function drawTarget(task)
     drawToolSprite(task.kind, task.targetX, task.targetY, 0.62, false)
 end
 
+local function readerFrame(task)
+    local step = task.reader and task.reader.step or 0
+    if step <= 0 then return 1 end
+    if step == 1 then return 2 end
+    if step == 2 then return 2 + (math.floor(love.timer.getTime() * 5) % 2) end
+    return 4
+end
+
+local function drawCodeReader(task, assets, mouseX, mouseY, job)
+    local frame = assets.get("diagnosticReader" .. string.format("%02d", readerFrame(task)))
+    Ui.label("MOTO CODE READER", 540, 140, 268, { 0.90, 0.84, 0.57 }, "center")
+    if frame then
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(frame, readerLayout.x, readerLayout.y, 0,
+            readerLayout.scale, readerLayout.scale)
+    end
+    local button = readerButtonAt(mouseX or -1, mouseY or -1)
+    if button then
+        local positions = {
+            ok = { 146, 198, 61, 49 }, back = { 54, 198, 62, 49 },
+            up = { 98, 143, 61, 41 }, down = { 98, 181, 61, 37 },
+            left = { 52, 157, 47, 43 }, right = { 158, 157, 49, 43 },
+        }
+        local box = positions[button]
+        if box then
+            love.graphics.setColor(0.42, 0.90, 0.82, 0.26)
+            love.graphics.rectangle("fill", readerLayout.x + box[1] * readerLayout.scale,
+                readerLayout.y + box[2] * readerLayout.scale,
+                box[3] * readerLayout.scale, box[4] * readerLayout.scale, 4, 4)
+        end
+    end
+    local step = task.reader.step
+    if step < 3 then
+        Ui.label("Mode: " .. (task.reader.menu == 1 and "READ DTC" or "LIVE DATA"),
+            540, 408, 268, { 0.75, 0.82, 0.80 }, "center")
+    end
+    if step == 0 then
+        Ui.label("Press the orange OK button to power on.", 540, 430, 268,
+            { 0.75, 0.82, 0.80 }, "center")
+    elseif step == 1 then
+        Ui.label("ECU link ready. Press OK to scan.", 540, 430, 268,
+            { 0.58, 0.90, 0.92 }, "center")
+    elseif step == 2 then
+        Ui.label("Reading live data... press OK when the scan settles.", 540, 430, 268,
+            { 0.58, 0.90, 0.92 }, "center")
+    else
+        Ui.label("DTC " .. task.reader.faultCode .. " FOUND", 540, 420, 268,
+            { 1.0, 0.73, 0.32 }, "center")
+        Ui.label(job.diagnosis, 540, 448, 268, { 0.82, 0.86, 0.82 }, "center")
+        Ui.label("Press OK to send the result to the work order.", 540, 500, 268,
+            { 0.75, 0.82, 0.80 }, "center")
+    end
+    Ui.label("Use the reader buttons: arrows navigate • orange check confirms",
+        520, 530, 308, { 0.56, 0.64, 0.62 }, "center")
+end
+
 function RepairMinigameScreen.draw(state, assets, mouseX, mouseY)
     local job = selectedJob(state)
     local task = state.repairMinigame
@@ -207,12 +312,19 @@ function RepairMinigameScreen.draw(state, assets, mouseX, mouseY)
         love.graphics.draw(bike, 112, 128, 0, 0.78, 0.78)
     end
     Ui.label(job.bike.make .. " " .. job.bike.model, 112, 394, 370, { 0.90, 0.84, 0.57 })
-    Ui.label("Move the highlighted service sprite to the target on the bike.",
+    Ui.label(task.action == "diagnose"
+        and "Use the code reader buttons to inspect the ECU."
+        or "Move the highlighted service sprite to the target on the bike.",
         112, 425, 370, { 0.68, 0.78, 0.77 })
     Ui.label(task.label, 112, 454, 370, { 0.58, 0.90, 0.92 })
 
     love.graphics.setColor(0.07, 0.12, 0.13, 0.95)
     love.graphics.rectangle("fill", 510, 112, 328, 410, 5, 5)
+    if task.action == "diagnose" then
+        drawCodeReader(task, assets, mouseX, mouseY, job)
+        Ui.button(694, 566, 144, 38, "Cancel", "ESC", mouseX, mouseY)
+        return
+    end
     Ui.label("SERVICE TARGET", 540, 140, 268, { 0.90, 0.84, 0.57 }, "center")
     drawTarget(task)
     drawToolSprite(task.kind, task.tokenX, task.tokenY, 0.90, task.dragging)

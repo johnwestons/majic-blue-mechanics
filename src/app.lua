@@ -11,6 +11,7 @@ local Jobs = require("src.jobs")
 local Navigation = require("src.navigation")
 local Save = require("src.save")
 local ServiceScreen = require("src.screens.service_screen")
+local RepairMinigameScreen = require("src.screens.repair_minigame_screen")
 local Smoke = require("src.smoke")
 local State = require("src.state")
 local TitleScreen = require("src.screens.title_screen")
@@ -50,6 +51,7 @@ local inputContext = {
     jobOfferScreen = JobOfferScreen,
     computerScreen = ComputerScreen,
     serviceScreen = ServiceScreen,
+    repairMinigameScreen = RepairMinigameScreen,
     saveCurrent = saveCurrent,
     returnToTitle = returnToTitle,
 }
@@ -84,6 +86,7 @@ function App.load()
             config = Config,
             jobs = Jobs,
             jobService = JobService,
+            repairMinigameScreen = RepairMinigameScreen,
             navigation = Navigation,
             save = Save,
             state = state,
@@ -121,6 +124,8 @@ function App.draw()
             ComputerScreen.draw(state, mouseX, mouseY)
         elseif state.screen == "service" then
             ServiceScreen.draw(state, Assets, mouseX, mouseY)
+        elseif state.screen == "repair_minigame" then
+            RepairMinigameScreen.draw(state, Assets, mouseX, mouseY)
         end
     end
     Viewport.endDraw()
@@ -139,6 +144,16 @@ function App.mousepressed(x, y, button)
     if state.screen == "asset_error" then return end
     local gameX, gameY = Viewport.toGame(x, y, Config.baseWidth, Config.baseHeight)
     Input.mousepressed(gameX, gameY, button, inputContext)
+end
+
+function App.mousemoved(x, y)
+    local gameX, gameY = Viewport.toGame(x, y, Config.baseWidth, Config.baseHeight)
+    Input.mousemoved(gameX, gameY, inputContext)
+end
+
+function App.mousereleased(x, y, button)
+    local gameX, gameY = Viewport.toGame(x, y, Config.baseWidth, Config.baseHeight)
+    Input.mousereleased(gameX, gameY, button, inputContext)
 end
 
 function App.quit() saveCurrent() end

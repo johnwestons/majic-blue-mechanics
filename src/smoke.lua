@@ -50,6 +50,17 @@ local function runChecks(context)
     }
     check("legacy_job_bike_migration", context.jobs.ensureBikeSprite(legacyJob) == "redSupersport"
         and legacyJob.artwork == "motorcycleService_redSupersport")
+    local miniState = context.State.newGame(2)
+    local miniOffer = context.jobs.createOffer(1)
+    context.jobs.accept(miniOffer)
+    miniState.jobs.active[1] = miniOffer
+    miniState.selectedJobId = miniOffer.id
+    check("repair_minigame_starts", context.repairMinigameScreen.begin(miniState, "diagnose"))
+    local miniTask = miniState.repairMinigame
+    context.repairMinigameScreen.mousepressed(miniState, miniTask.tokenX, miniTask.tokenY)
+    context.repairMinigameScreen.mousemoved(miniState, miniTask.targetX, miniTask.targetY)
+    check("repair_minigame_accepts_drop",
+        context.repairMinigameScreen.mousereleased(miniState, miniTask.targetX, miniTask.targetY) == "diagnose")
     local serviceState = context.State.newGame(1)
     serviceState.pendingOffer = offer
     check("accept_work_order", context.jobService.acceptOffer(serviceState))

@@ -14,8 +14,11 @@ local function saveAfter(context, ok, message)
     return ok
 end
 
-local function serviceAction(action, context)
+local function serviceAction(action, context, fromMiniGame)
     local state, service = context.state, context.jobService
+    if not fromMiniGame then
+        return context.repairMinigameScreen.begin(state, action)
+    end
     local ok, message
     if action == "diagnose" then
         ok, message = service.diagnose(state, state.selectedJobId)
@@ -62,6 +65,11 @@ function Input.keypressed(key, context)
         if key == "d" then return serviceAction("diagnose", context) end
         if key == "r" then return serviceAction("repair", context) end
         if key == "t" then return serviceAction("road_test", context) end
+    elseif state.screen == "repair_minigame" then
+        if key == "escape" or key == "e" then
+            context.repairMinigameScreen.cancel(state)
+            return true
+        end
     end
     return false
 end
@@ -81,8 +89,32 @@ function Input.mousepressed(x, y, button, context)
         local action = context.serviceScreen.hit(state, x, y)
         if action == "close" then state.screen = "world" return true end
         if action then return serviceAction(action, context) end
+    elseif state.screen == "repair_minigame" then
+        if context.repairMinigameScreen.hit(x, y) == "cancel" then
+            context.repairMinigameScreen.cancel(state)
+            return true
+        end
+        return context.repairMinigameScreen.mousepressed(state, x, y)
     end
     return false
+end
+
+function Input.mousemoved(x, y, context)
+    if context.state.screen == "repair_minigame" then
+        return context.repairMinigameScreen.mousemoved(context.state, x, y)
+    end
+    return false
+end
+
+function Input.mousereleased(x, y, button, context)
+    if button ~= 1 or context.state.screen ~= "repair_minigame" then return false end
+    local action = context.repairMinigameScreen.mousereleased(context.state, x, y)
+    if not action then return false end
+    context.repairMinigameScreen.finish(context.state)
+    local ok = serviceAction(action, context, true)
+    if ok and action ~= "road_test" then context.state.screen = "service" end
+    if not ok then context.state.screen = "service" end
+    return ok
 end
 
 return Input

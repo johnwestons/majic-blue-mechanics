@@ -16,7 +16,7 @@ local function receiveRect(index)
 end
 
 function Screen.draw(state, mouseX, mouseY)
-    Ui.panel(88, 62, 784, 548, "MAJIC BLUE PARTS VAN  •  DELIVERY MANIFEST")
+    Ui.panel(88, 62, 784, 548, "PARTS DELIVERY TRUCK  •  CARGO MANIFEST")
     local manifest = Procurement.manifest(state)
     Ui.label(string.format("%d package%s remaining", #manifest, #manifest == 1 and "" or "s"),
         126, 132, 690, { 0.90, 0.84, 0.57 })

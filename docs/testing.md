@@ -16,7 +16,7 @@ depth order, illegible controls, and theme regressions. The output is intentiona
 evidence rather than source art.
 
 The matrix covers title, workshop, estimate, active computer, parts computer, service, diagnostic,
-repair part/tool stages, road test, parts van, delivery manifest, and inbound/outbound flatbeds.
+repair part/tool stages, road test, parts truck, delivery manifest, and inbound/outbound flatbeds.
 
 ## Asset validation
 

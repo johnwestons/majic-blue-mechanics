@@ -38,7 +38,7 @@ function Procurement.orderDelivery(state, kind)
     state.procurement.orders[#state.procurement.orders + 1] = order
     state.money = state.money - item.cost
     state.expenses = state.expenses + item.cost
-    state.message = string.format("%s ordered for parts-van delivery.", item.label)
+    state.message = string.format("%s ordered for delivery truck shipment.", item.label)
     return true, order
 end
 

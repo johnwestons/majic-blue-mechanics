@@ -130,7 +130,7 @@ local function runChecks(context)
     check("road_test_rider_hit_animation_loaded", riderHitLoaded)
     check("player_spawn_walkable", context.navigation.isWalkable(context.assets,
         context.config.player.spawnX, context.config.player.spawnY, {}))
-    check("parts_van_interaction_is_walkable", context.navigation.isWalkable(context.assets,
+    check("parts_truck_interaction_is_walkable", context.navigation.isWalkable(context.assets,
         context.config.partsDelivery.interaction.x, context.config.partsDelivery.interaction.y, {}))
     check("flatbed_interaction_is_walkable", context.navigation.isWalkable(context.assets,
         context.config.motorcycleTransport.interaction.x,
@@ -138,8 +138,18 @@ local function runChecks(context)
 
     local mechanic = context.characterAssets.get("mechanic-raccoon", "idle", 1)
     local customer = context.characterAssets.get("business-fox", "walk", 1)
+    local deliveryTruck = context.assets.get("deliveryTruck")
+    local truckCargoDoor = context.assets.get("truckCargoDoor")
     check("mechanic_strip_available", mechanic ~= nil)
     check("customer_strip_available", customer ~= nil)
+    check("picture_shop_delivery_truck_loaded", deliveryTruck
+        and deliveryTruck:getWidth() == 512 and deliveryTruck:getHeight() == 512)
+    check("picture_shop_cargo_door_strip_loaded", truckCargoDoor
+        and truckCargoDoor:getWidth() == 2560 and truckCargoDoor:getHeight() == 512)
+    for frame = 1, context.config.partsDelivery.cargoFrameCount do
+        check("picture_shop_cargo_door_frame_" .. frame,
+            context.assets.getQuad("truckCargoDoor" .. frame) ~= nil)
+    end
     local standingMetrics = context.characterAssets.normalizedFrameMetrics(
         "business-fox", "idle", 1)
     local seatedMetrics = context.characterAssets.normalizedFrameMetrics(
@@ -348,6 +358,7 @@ local function runChecks(context)
     end
     local clickState = context.State.newGame(3)
     local clickOffer = context.jobs.createOffer(1)
+    clickOffer.transportRequired = false
     context.jobs.accept(clickOffer)
     context.jobs.diagnose(clickOffer)
     clickState.jobs.active[1] = clickOffer
@@ -391,27 +402,41 @@ local function runChecks(context)
         and purchaseOrder.status == "awaiting_delivery")
     check("ordered_parts_wait_for_van",
         context.procurement.quantity(serviceState, offer.repairKind) == 0)
-    check("parts_van_groups_waiting_order", context.deliveryVehicle.schedule(serviceState,
+    check("parts_truck_groups_waiting_order", context.deliveryVehicle.schedule(serviceState,
         serviceState.procurement, context.config.partsDelivery)
         and purchaseOrder.status == "assigned_to_van")
     context.deliveryVehicle.update(serviceState, context.config.partsDelivery.scheduleDelay,
         context.config.partsDelivery)
-    context.deliveryVehicle.update(serviceState, context.config.partsDelivery.travelDuration,
+    context.deliveryVehicle.update(serviceState, context.config.partsDelivery.backingDuration,
         context.config.partsDelivery)
-    check("parts_van_parks", serviceState.delivery.state == "parked_closed")
-    check("parts_van_door_opens", context.deliveryVehicle.toggleDoor(serviceState))
-    context.deliveryVehicle.update(serviceState, context.config.partsDelivery.doorDuration,
+    check("parts_truck_parks", serviceState.delivery.state == "parked_closed")
+    check("parts_truck_door_opens", context.deliveryVehicle.toggleDoor(serviceState))
+    context.deliveryVehicle.update(serviceState, context.config.partsDelivery.cargoDuration,
         context.config.partsDelivery)
+    check("parts_truck_uses_five_frame_cargo_animation",
+        context.deliveryVehicle.cargoFrame(serviceState, context.config.partsDelivery)
+            == context.config.partsDelivery.cargoFrameCount)
     check("parts_manifest_available", #context.procurement.manifest(serviceState) == 1)
-    check("loaded_van_cannot_close", not context.world.closePartsVan(serviceState))
+    check("loaded_truck_cannot_close", not context.world.closePartsVan(serviceState))
     check("manifest_receives_exact_order",
         context.procurement.receiveOrder(serviceState, purchaseOrder.id)
         and context.procurement.quantity(serviceState, offer.repairKind) == 1
         and purchaseOrder.status == "received")
     check("delivery_item_cannot_be_received_twice",
         not context.procurement.receiveOrder(serviceState, purchaseOrder.id))
-    check("empty_van_can_close", context.world.closePartsVan(serviceState)
+    check("empty_truck_can_close", context.world.closePartsVan(serviceState)
         and serviceState.delivery.state == "door_closing")
+    check("parts_truck_cargo_closes_to_parked",
+        context.deliveryVehicle.update(serviceState,
+            context.config.partsDelivery.cargoDuration, context.config.partsDelivery)
+            == "cargo_closed" and serviceState.delivery.state == "parked_closed")
+    check("parts_truck_departure_starts",
+        context.deliveryVehicle.depart(serviceState)
+        and serviceState.delivery.state == "departing")
+    check("parts_truck_departure_finishes",
+        context.deliveryVehicle.update(serviceState,
+            context.config.partsDelivery.backingDuration, context.config.partsDelivery)
+            == "departed" and serviceState.delivery.state == "absent")
     check("repair_work_order", context.jobService.repair(serviceState, offer.id))
     check("parts_deducted", serviceState.money == cashBeforeParts - offer.partsCost)
     check("repair_consumes_inventory",
@@ -557,12 +582,12 @@ local function runChecks(context)
     context.deliveryVehicle.update(deliverySaveState,
         context.config.partsDelivery.scheduleDelay, context.config.partsDelivery)
     context.deliveryVehicle.update(deliverySaveState,
-        context.config.partsDelivery.travelDuration / 2, context.config.partsDelivery)
+        context.config.partsDelivery.backingDuration / 2, context.config.partsDelivery)
     check("mid_delivery_save_write", context.save.save(2, deliverySaveState,
         { x = 520, y = 480, facing = 1 }))
     local resumedDelivery = context.save.load(2)
-    check("mid_delivery_save_restores_van", resumedDelivery
-        and resumedDelivery.delivery.state == "arriving"
+    check("mid_delivery_save_restores_truck", resumedDelivery
+        and resumedDelivery.delivery.state == "backing"
         and resumedDelivery.delivery.progress > 0 and resumedDelivery.delivery.progress < 1
         and resumedDelivery.procurement.orders[1].status == "assigned_to_van")
     context.save.delete(2)

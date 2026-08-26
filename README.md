@@ -89,7 +89,8 @@ The office computer now separates active work orders, completed service history,
 records, parts inventory, and shop finances. Click a work order for the full complaint, service, parts,
 estimate, and stable record identities; number keys 1–5 change tabs and Up/Down plus Enter opens a
 selected order. Parts must be stocked before a repair. Orders placed in the Parts tab are grouped onto
-the Majic Blue parts van; open its rear doors, inspect the manifest, and receive each package before
+the Picture Shop-style box delivery truck; let it back into the workshop, open its animated rear cargo
+door, inspect the manifest, and receive each package before
 the matching repair can begin.
 
 ## Saves and safety
@@ -97,7 +98,7 @@ the matching repair can begin.
 The game owns three versioned local slots under the LÖVE save directory. A pending file is decoded and validated before promotion; the last valid primary is retained as a backup. New games and every economy or work-order stage save automatically.
 Save format 5 also retains the waiting rider, their unchanged estimate, lounge seat and wait time,
 stable customer and motorcycle identities, parts inventory, purchase-order history, and an in-progress
-parts-van or motorcycle-flatbed delivery. Version-1 through version-4 shops migrate when loaded.
+parts-truck or motorcycle-flatbed delivery. Version-1 through version-4 shops migrate when loaded.
 
 The first rider reaches the lounge within a few seconds. Later riders arrive at varied 60–150 second
 intervals, rotate through the three lounge seats, and wait up to five minutes before leaving.

@@ -79,7 +79,7 @@ function JobService.canBeginRepair(state, id)
     end
     if Procurement.quantity(state, job.repairKind) < 1 then
         return false, "Required " .. tostring(job.repairKind)
-            .. " service kit is not in stock. Order it at the computer, then receive it from the parts van."
+            .. " service kit is not in stock. Order it at the computer, then receive it from the delivery truck."
     end
     return true, job
 end

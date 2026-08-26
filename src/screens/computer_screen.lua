@@ -171,7 +171,7 @@ end
 
 local function drawParts(state, mouseX, mouseY)
     Procurement.ensure(state)
-    Ui.label("MOTORCYCLE PARTS INVENTORY  •  VAN DELIVERY", LIST.x, 205,
+    Ui.label("MOTORCYCLE PARTS INVENTORY  •  TRUCK DELIVERY", LIST.x, 205,
         LIST.width, { 0.90, 0.84, 0.57 })
     for index, item in ipairs(Catalog.all()) do
         local rect, buy = partRect(index), partBuyRect(index)
@@ -183,7 +183,7 @@ local function drawParts(state, mouseX, mouseY)
         Ui.button(buy.x, buy.y, buy.width, buy.height, "ORDER", nil, mouseX, mouseY,
             state.money >= item.cost)
     end
-    Ui.label("HOW: Order the kit named by the service bay. Wait for the blue parts van, open the rear doors, then RECEIVE the package.",
+    Ui.label("HOW: Order the kit named by the service bay. Wait for the delivery truck, open its rear cargo door, then RECEIVE the package.",
         LIST.x, 526, LIST.width, { 0.90, 0.76, 0.36 }, "center")
 end
 

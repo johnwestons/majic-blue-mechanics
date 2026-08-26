@@ -50,33 +50,20 @@ local function drawPlayer(world, characterAssets)
     end
 end
 
-local function drawPartsVan(state)
+local function drawPartsTruck(state, assets)
     if not DeliveryVehicle.visible(state) then return end
     local transform = DeliveryVehicle.transform(state, Config.partsDelivery)
-    local x, y, scale = transform.x, transform.y, transform.scale
-    love.graphics.push()
-    love.graphics.translate(x, y)
-    love.graphics.scale(scale, scale)
-    love.graphics.setColor(0.04, 0.10, 0.14, 1)
-    love.graphics.rectangle("fill", -92, -50, 170, 70, 10, 10)
-    love.graphics.setColor(0.08, 0.34, 0.52, 1)
-    love.graphics.rectangle("fill", -82, -44, 150, 58, 7, 7)
-    love.graphics.setColor(0.58, 0.90, 0.92, 1)
-    love.graphics.polygon("fill", 42, -39, 70, -22, 70, -2, 42, -2)
-    love.graphics.setColor(0.90, 0.84, 0.57, 1)
-    love.graphics.printf("MAJIC BLUE\nPARTS", -72, -34, 104, "center")
-    local delivery = DeliveryVehicle.ensure(state)
-    local opening = delivery.doorProgress * 30
-    love.graphics.setColor(0.12, 0.16, 0.17, 1)
-    love.graphics.rectangle("fill", -86 - opening, -36, 7, 48, 2, 2)
-    love.graphics.rectangle("fill", -79 + opening, -36, 7, 48, 2, 2)
-    love.graphics.setColor(0.04, 0.04, 0.04, 1)
-    love.graphics.circle("fill", -50, 20, 15)
-    love.graphics.circle("fill", 46, 20, 15)
-    love.graphics.setColor(0.62, 0.65, 0.62, 1)
-    love.graphics.circle("fill", -50, 20, 6)
-    love.graphics.circle("fill", 46, 20, 6)
-    love.graphics.pop()
+    local truck = assets.get("deliveryTruck")
+    local cargo = assets.get("truckCargoDoor")
+    local cargoQuad = assets.getQuad("truckCargoDoor"
+        .. DeliveryVehicle.cargoFrame(state, Config.partsDelivery))
+    if not truck or not cargo or not cargoQuad then return end
+    local origin = Config.partsDelivery.frameSize
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(truck, transform.x, transform.y, 0,
+        transform.scale, transform.scale, origin / 2, origin * 0.84)
+    love.graphics.draw(cargo, cargoQuad, transform.x, transform.y, 0,
+        transform.scale, transform.scale, origin / 2, origin * 0.84)
 end
 
 local function drawMotorcycleTransport(state, assets)
@@ -120,7 +107,7 @@ function Renderer.draw(world, assets, characterAssets, state)
     local actors = {
         { y = Config.serviceBay.bikeY, draw = function() drawMotorcycle(assets, job) end },
         { y = DeliveryVehicle.transform(state, Config.partsDelivery).y,
-            draw = function() drawPartsVan(state) end },
+            draw = function() drawPartsTruck(state, assets) end },
         { y = MotorcycleTransport.transform(state, Config.motorcycleTransport).y,
             draw = function() drawMotorcycleTransport(state, assets) end },
         { y = world.player.y, draw = function() drawPlayer(world, characterAssets) end },

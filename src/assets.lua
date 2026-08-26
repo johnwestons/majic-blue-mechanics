@@ -3,6 +3,7 @@ local Config = require("src.config")
 local Assets = {
     images = {},
     data = {},
+    quads = {},
     failures = {},
 }
 
@@ -39,9 +40,11 @@ end
 
 function Assets.load()
     Assets.releaseAll()
-    Assets.images, Assets.data, Assets.failures = {}, {}, {}
+    Assets.images, Assets.data, Assets.quads, Assets.failures = {}, {}, {}, {}
     loadImage("workshop", Config.paths.workshop)
     loadData("walkmask", Config.paths.walkmask)
+    loadImage("deliveryTruck", Config.paths.deliveryTruck)
+    loadImage("truckCargoDoor", Config.paths.truckCargoDoor)
     loadImage("motorcycleSide", Config.paths.motorcycleSide)
     loadImage("motorcyclePoster", Config.paths.motorcyclePoster)
     loadImage("motorcycleAction", Config.paths.motorcycleAction)
@@ -82,6 +85,26 @@ function Assets.load()
         loadImage("motorcycleRear_" .. key, paths.rear)
     end
 
+    local truck, cargo = Assets.images.deliveryTruck, Assets.images.truckCargoDoor
+    local frameSize = Config.partsDelivery.frameSize
+    local frameCount = Config.partsDelivery.cargoFrameCount
+    if truck and (truck:getWidth() ~= frameSize or truck:getHeight() ~= frameSize) then
+        failure(Config.paths.deliveryTruck, string.format(
+            "expected %dx%d delivery-truck sprite", frameSize, frameSize))
+    end
+    if cargo then
+        if cargo:getWidth() ~= frameSize * frameCount or cargo:getHeight() ~= frameSize then
+            failure(Config.paths.truckCargoDoor, string.format(
+                "expected %dx%d cargo-door strip", frameSize * frameCount, frameSize))
+        else
+            for frame = 1, frameCount do
+                Assets.quads["truckCargoDoor" .. frame] = love.graphics.newQuad(
+                    (frame - 1) * frameSize, 0, frameSize, frameSize,
+                    cargo:getWidth(), cargo:getHeight())
+            end
+        end
+    end
+
     local workshop, walkmask = Assets.images.workshop, Assets.data.walkmask
     if workshop and walkmask then
         local workshopWidth, workshopHeight = workshop:getDimensions()
@@ -94,6 +117,7 @@ end
 
 function Assets.get(key) return Assets.images[key] end
 function Assets.getData(key) return Assets.data[key] end
+function Assets.getQuad(key) return Assets.quads[key] end
 
 function Assets.assertHealthy()
     return #Assets.failures == 0, table.concat(Assets.failures, "\n")

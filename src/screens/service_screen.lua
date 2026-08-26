@@ -18,7 +18,7 @@ local function nextStep(job, state)
     end
     if job.stage == "repair" and Procurement.quantity(state, job.repairKind) < 1 then
         return "NEXT: Computer > PARTS: order the " .. tostring(job.repairKind)
-            .. " kit. Wait for the blue van, open its rear doors, and click RECEIVE."
+            .. " kit. Wait for the delivery truck, open its rear cargo door, and click RECEIVE."
     end
     if job.stage == "repair" then
         return "NEXT: Start repair. Drag the part to the bike, choose the correct tool, finish every work point, then click the green check."

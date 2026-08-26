@@ -92,9 +92,12 @@ function World.update(dt, directionX, directionY, assets, state)
     DeliveryVehicle.schedule(state, state.procurement, Config.partsDelivery)
     local deliveryEvent = DeliveryVehicle.update(state, dt, Config.partsDelivery)
     if deliveryEvent == "parked" then
-        state.message = "The Majic Blue parts van has arrived. Open it at the rear doors."
+        state.message = "The parts delivery truck has backed in. Open its rear cargo door."
+    elseif deliveryEvent == "cargo_closed" then
+        DeliveryVehicle.depart(state)
+        state.message = "Cargo secured. The delivery truck is pulling out."
     elseif deliveryEvent == "departed" then
-        state.message = "The parts van has left the workshop."
+        state.message = "The parts delivery truck has left the workshop."
     end
     local transport = MotorcycleTransport.ensure(state)
     if transport.state == "absent" then
@@ -164,7 +167,7 @@ function World.interact(state)
         state.selectedJobId = selected.jobId
         state.screen = "service"
         return true
-    elseif selected.kind == "parts_van" then
+    elseif selected.kind == "parts_truck" then
         local delivery = DeliveryVehicle.ensure(state)
         if delivery.state == "parked_closed" then
             return DeliveryVehicle.toggleDoor(state)

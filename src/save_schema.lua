@@ -86,7 +86,7 @@ function Schema.reconcile(payload)
     end
     payload.delivery = type(payload.delivery) == "table" and payload.delivery
         or { state = "absent", orderIds = {}, timer = 0, progress = 0, doorProgress = 0 }
-    local deliveryStates = { absent = true, scheduled = true, arriving = true,
+    local deliveryStates = { absent = true, scheduled = true, arriving = true, backing = true,
         parked_closed = true, door_opening = true, cargo_open = true,
         door_closing = true, departing = true }
     if not deliveryStates[payload.delivery.state] then return false end

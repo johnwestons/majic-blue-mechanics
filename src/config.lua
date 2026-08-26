@@ -58,14 +58,18 @@ local Config = {
         serviceBay = { x = 300, y = 336, radius = 86 },
     },
     partsDelivery = {
+        frameSize = 512,
+        cargoFrameCount = 5,
         scheduleDelay = 2.5,
-        travelDuration = 2.2,
-        doorDuration = 0.65,
+        backingDuration = 2.2,
+        cargoDuration = 0.75,
         maximumOrders = 5,
-        start = { x = 1040, y = 470, scale = 0.78 },
-        parked = { x = 842, y = 470, scale = 0.78 },
-        interaction = { x = 735, y = 474, radius = 90 },
-        obstacle = { halfWidth = 76, halfHeight = 34 },
+        -- The Picture Shop truck backs in along its painted isometric body
+        -- axis and keeps one physical size throughout the maneuver.
+        start = { x = -220, y = 300, scale = 0.50 },
+        parked = { x = 70, y = 420, scale = 0.50 },
+        interaction = { x = 250, y = 430, radius = 88 },
+        obstacle = { offsetX = 12, offsetY = -30, radius = 92 },
     },
     motorcycleTransport = {
         scheduleDelay = 2.5,
@@ -156,6 +160,8 @@ local Config = {
     paths = {
         workshop = "assets/workshop/workshop-layout-v2.png",
         walkmask = "assets/workshop/workshop-walkmask.png",
+        deliveryTruck = "assets/delivery/delivery-truck-open.png",
+        truckCargoDoor = "assets/delivery/truck-cargo-door-strip.png",
         motorcycleSide = "assets/motorcycles/gsxr-600-service.png",
         motorcyclePoster = "assets/motorcycles/gsxr-600-poster.png",
         motorcycleAction = "assets/motorcycles/gsxr-600-action.png",

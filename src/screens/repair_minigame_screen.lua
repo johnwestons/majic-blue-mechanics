@@ -7,6 +7,8 @@ local BackButton = require("src.screens.back_button")
 local RepairMinigameScreen = {}
 local REPAIR_BACK = { x = 100, y = 566, width = 144, height = 38 }
 local DIAGNOSIS_BACK = { x = 694, y = 566, width = 144, height = 38 }
+local INSPECTION_BADGE = { x = 596, y = 280, width = 160, height = 178 }
+local INSPECTION_FINISH = { x = 610, y = 566, width = 228, height = 38 }
 
 local faultCodes = {
     oil = "P0524", brake = "C1234", chain = "P0722", stator = "P0562",
@@ -146,6 +148,13 @@ function RepairMinigameScreen.mousepressed(state, x, y)
     if task.action == "diagnose" then
         return RepairMinigameScreen.pressButton(state, readerButtonAt(x, y))
     end
+    if task.phase == "inspect"
+        and (Ui.contains(INSPECTION_BADGE.x, INSPECTION_BADGE.y,
+            INSPECTION_BADGE.width, INSPECTION_BADGE.height, x, y)
+            or Ui.contains(INSPECTION_FINISH.x, INSPECTION_FINISH.y,
+                INSPECTION_FINISH.width, INSPECTION_FINISH.height, x, y)) then
+        return "repair"
+    end
     return RepairMinigame.mousepressed(task, x, y)
 end
 
@@ -170,7 +179,11 @@ end
 function RepairMinigameScreen.hit(state, x, y)
     local task = state and state.repairMinigame
     if task and task.action == "repair" then
-        if task.phase == "inspect" and Ui.contains(610, 566, 228, 38, x, y) then
+        if task.phase == "inspect"
+            and (Ui.contains(INSPECTION_BADGE.x, INSPECTION_BADGE.y,
+                INSPECTION_BADGE.width, INSPECTION_BADGE.height, x, y)
+                or Ui.contains(INSPECTION_FINISH.x, INSPECTION_FINISH.y,
+                    INSPECTION_FINISH.width, INSPECTION_FINISH.height, x, y)) then
             return "finish"
         end
         if BackButton.contains(REPAIR_BACK, x, y) then return "cancel" end
@@ -476,6 +489,8 @@ local function drawRepair(task, job, bike, assets, mouseX, mouseY)
         love.graphics.setLineWidth(8)
         love.graphics.line(648, 348, 668, 369, 706, 324)
         Ui.label("REPAIR VERIFIED", 536, 425, 280, { 0.66, 0.94, 0.72 }, "center")
+        Ui.label("CLICK CHECKMARK TO FINISH", 536, 449, 280,
+            { 0.90, 0.84, 0.57 }, "center")
     end
 
     Ui.label(task.phase == "inspect" and "QUALITY CHECK" or string.upper(task.targetLabel),
@@ -499,7 +514,9 @@ local function drawRepair(task, job, bike, assets, mouseX, mouseY)
     Ui.label(task.feedback or "", 526, 476, 300, feedbackColor, "center")
     BackButton.draw(REPAIR_BACK, "CANCEL", mouseX, mouseY)
     if task.phase == "inspect" then
-        Ui.button(610, 566, 228, 38, "Finish repair", "ENTER", mouseX, mouseY, true)
+        Ui.button(INSPECTION_FINISH.x, INSPECTION_FINISH.y,
+            INSPECTION_FINISH.width, INSPECTION_FINISH.height,
+            "Finish repair", "ENTER", mouseX, mouseY, true)
     else
         Ui.label("Mouse: drag + work tool   •   Keyboard: arrows + Enter",
             326, 579, 266, { 0.50, 0.59, 0.58 }, "center")

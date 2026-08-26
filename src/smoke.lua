@@ -324,6 +324,8 @@ local function runChecks(context)
         end
         check("tool_work_completes_" .. template.repairKind,
             repairTask.phase == "inspect" and repairTask.complete)
+        check("inspection_click_confirms_" .. template.repairKind,
+            context.repairMinigameScreen.mousepressed(repairState, 676, 347) == "repair")
         check("inspection_confirms_" .. template.repairKind,
             context.repairMinigameScreen.pressButton(repairState, "ok") == "repair")
     end

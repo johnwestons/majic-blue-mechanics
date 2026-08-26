@@ -183,6 +183,8 @@ local function drawParts(state, mouseX, mouseY)
         Ui.button(buy.x, buy.y, buy.width, buy.height, "ORDER", nil, mouseX, mouseY,
             state.money >= item.cost)
     end
+    Ui.label("HOW: Order the kit named by the service bay. Wait for the blue parts van, open the rear doors, then RECEIVE the package.",
+        LIST.x, 526, LIST.width, { 0.90, 0.76, 0.36 }, "center")
 end
 
 local function drawDetail(state, mouseX, mouseY)

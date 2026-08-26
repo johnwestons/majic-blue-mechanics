@@ -346,6 +346,38 @@ local function runChecks(context)
         check("inspection_confirms_" .. template.repairKind,
             context.repairMinigameScreen.pressButton(repairState, "ok") == "repair")
     end
+    local clickState = context.State.newGame(3)
+    local clickOffer = context.jobs.createOffer(1)
+    context.jobs.accept(clickOffer)
+    context.jobs.diagnose(clickOffer)
+    clickState.jobs.active[1] = clickOffer
+    clickState.selectedJobId = clickOffer.id
+    clickState.screen = "service"
+    local clickContext = {
+        state = clickState,
+        jobService = context.jobService,
+        serviceScreen = context.serviceScreen,
+        repairMinigameScreen = context.repairMinigameScreen,
+        roadTestScreen = context.roadTestScreen,
+        saveCurrent = function() return true end,
+    }
+    local unstockedClick = context.input.mousepressed(200, 550, 1, clickContext)
+    check("unstocked_repair_click_returns_false", unstockedClick == false)
+    check("unstocked_repair_stays_at_service",
+        clickState.screen == "service" and clickOffer.stage == "repair")
+    check("unstocked_repair_explains_parts_requirement",
+        clickState.message and clickState.message:find("service kit", 1, true) ~= nil)
+    clickState.inventory.parts[clickOffer.repairKind] = 1
+    check("stocked_repair_minigame_opens",
+        context.input.mousepressed(200, 550, 1, clickContext)
+        and clickState.screen == "repair_minigame")
+    clickState.repairMinigame.phase = "inspect"
+    clickState.repairMinigame.complete = true
+    check("green_check_advances_work_order_to_road_test",
+        context.input.mousepressed(676, 347, 1, clickContext)
+        and clickOffer.stage == "road_test" and clickOffer.checklist.repaired
+        and clickState.screen == "service"
+        and context.procurement.quantity(clickState, clickOffer.repairKind) == 0)
     local serviceState = context.State.newGame(1)
     serviceState.pendingOffer = offer
     check("accept_work_order", context.jobService.acceptOffer(serviceState))

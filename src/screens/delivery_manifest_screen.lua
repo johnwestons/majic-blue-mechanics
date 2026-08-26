@@ -20,6 +20,8 @@ function Screen.draw(state, mouseX, mouseY)
     local manifest = Procurement.manifest(state)
     Ui.label(string.format("%d package%s remaining", #manifest, #manifest == 1 and "" or "s"),
         126, 132, 690, { 0.90, 0.84, 0.57 })
+    Ui.label("HOW: Click RECEIVE on every package. When none remain, close the cargo doors.",
+        126, 158, 690, { 0.90, 0.76, 0.36 })
     if #manifest == 0 then
         Ui.label("All ordered parts are checked into shop inventory.", 126, 224, 690,
             { 0.58, 0.92, 0.74 }, "center")

@@ -1,4 +1,5 @@
 local Jobs = require("src.jobs")
+local Procurement = require("src.procurement")
 local BackButton = require("src.screens.back_button")
 local Ui = require("src.screens.ui")
 
@@ -10,6 +11,23 @@ local stageButtons = {
     repair = { action = "repair", hotkey = "R", label = "Install parts & repair" },
     road_test = { action = "road_test", hotkey = "T", label = "Complete road test" },
 }
+
+local function nextStep(job, state)
+    if job.stage == "diagnosis" then
+        return "NEXT: Run diagnosis. Use arrows to select the matching bike system, then press the orange OK button through the scan."
+    end
+    if job.stage == "repair" and Procurement.quantity(state, job.repairKind) < 1 then
+        return "NEXT: Computer > PARTS: order the " .. tostring(job.repairKind)
+            .. " kit. Wait for the blue van, open its rear doors, and click RECEIVE."
+    end
+    if job.stage == "repair" then
+        return "NEXT: Start repair. Drag the part to the bike, choose the correct tool, finish every work point, then click the green check."
+    end
+    if job.stage == "road_test" then
+        return "NEXT: Start road test. W/Up accelerates, A/D steers, S/Down brakes, Shift boosts. Finish the course and Approve."
+    end
+    return "NEXT: Follow the highlighted service action to move this motorcycle through the shop."
+end
 
 function ServiceScreen.draw(state, assets, mouseX, mouseY)
     local job
@@ -37,6 +55,7 @@ function ServiceScreen.draw(state, assets, mouseX, mouseY)
     Ui.label(job.owner .. "  •  " .. job.company, 386, 150, 410, { 0.68, 0.78, 0.77 })
     Ui.label(job.service, 386, 184, 410, { 0.58, 0.90, 0.92 })
     Ui.label(Jobs.stageLabel(job), 386, 214, 410, { 0.86, 0.89, 0.84 })
+    Ui.label(nextStep(job, state), 148, 244, 660, { 0.95, 0.76, 0.34 })
 
     Ui.label("TECHNICIAN NOTES", 148, 282, 250, { 0.90, 0.84, 0.57 })
     local notes = job.stage == "diagnosis" and job.complaint or job.diagnosis
@@ -62,7 +81,11 @@ function ServiceScreen.draw(state, assets, mouseX, mouseY)
 
     local button = stageButtons[job.stage]
     if button then
-        Ui.button(148, 536, 342, 44, button.label, button.hotkey, mouseX, mouseY, true)
+        local repairReady = job.stage ~= "repair"
+            or Procurement.quantity(state, job.repairKind) > 0
+        local label = repairReady and button.label
+            or ("Receive " .. tostring(job.repairKind) .. " kit before repair")
+        Ui.button(148, 536, 342, 44, label, button.hotkey, mouseX, mouseY, repairReady)
     end
     BackButton.draw(CLOSE, "CLOSE", mouseX, mouseY)
 end

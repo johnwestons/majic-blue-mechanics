@@ -111,6 +111,7 @@ function App.load()
             input = Input,
             repairMinigameScreen = RepairMinigameScreen,
             roadTestScreen = RoadTestScreen,
+            serviceScreen = ServiceScreen,
             navigation = Navigation,
             motorcycleTransport = MotorcycleTransport,
             procurement = Procurement,

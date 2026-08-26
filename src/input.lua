@@ -83,6 +83,10 @@ local function serviceAction(action, context, fromMiniGame)
         if action == "road_test" then
             return context.roadTestScreen.begin(state)
         end
+        if action == "repair" then
+            local ready, message = service.canBeginRepair(state, state.selectedJobId)
+            if not ready then state.message = message return false end
+        end
         return context.repairMinigameScreen.begin(state, action)
     end
     local ok, message

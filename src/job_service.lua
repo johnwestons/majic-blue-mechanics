@@ -71,12 +71,24 @@ function JobService.diagnose(state, id)
     return false, message
 end
 
+function JobService.canBeginRepair(state, id)
+    local job = JobService.findActive(state, id)
+    if not job then return false, "That work order is not active." end
+    if job.stage ~= "repair" then
+        return false, "Diagnosis must be complete before repair work can begin."
+    end
+    if Procurement.quantity(state, job.repairKind) < 1 then
+        return false, "Required " .. tostring(job.repairKind)
+            .. " service kit is not in stock. Order it at the computer, then receive it from the parts van."
+    end
+    return true, job
+end
+
 function JobService.repair(state, id)
     local job = JobService.findActive(state, id)
     if not job then return false, "That work order is not active." end
-    if Procurement.quantity(state, job.repairKind) < 1 then
-        return false, "Required parts are not in stock. Order the matching service kit at the computer."
-    end
+    local ready, message = JobService.canBeginRepair(state, id)
+    if not ready then return false, message end
     local ok, message = Jobs.repair(job)
     if ok then
         Procurement.consume(state, job.repairKind)

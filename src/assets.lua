@@ -45,6 +45,7 @@ function Assets.load()
     loadData("walkmask", Config.paths.walkmask)
     loadImage("deliveryTruck", Config.paths.deliveryTruck)
     loadImage("truckCargoDoor", Config.paths.truckCargoDoor)
+    loadImage("loadingBayDoor", Config.paths.loadingBayDoor)
     loadImage("motorcycleSide", Config.paths.motorcycleSide)
     loadImage("motorcyclePoster", Config.paths.motorcyclePoster)
     loadImage("motorcycleAction", Config.paths.motorcycleAction)
@@ -101,6 +102,22 @@ function Assets.load()
                 Assets.quads["truckCargoDoor" .. frame] = love.graphics.newQuad(
                     (frame - 1) * frameSize, 0, frameSize, frameSize,
                     cargo:getWidth(), cargo:getHeight())
+            end
+        end
+    end
+    local bayDoor = Assets.images.loadingBayDoor
+    if bayDoor then
+        local width = Config.loadingBay.frameWidth * Config.loadingBay.frameCount
+        local height = Config.loadingBay.frameHeight
+        if bayDoor:getWidth() ~= width or bayDoor:getHeight() ~= height then
+            failure(Config.paths.loadingBayDoor, string.format(
+                "expected %dx%d loading-bay door strip", width, height))
+        else
+            for frame = 1, Config.loadingBay.frameCount do
+                Assets.quads["loadingBayDoor" .. frame] = love.graphics.newQuad(
+                    (frame - 1) * Config.loadingBay.frameWidth, 0,
+                    Config.loadingBay.frameWidth, Config.loadingBay.frameHeight,
+                    width, height)
             end
         end
     end

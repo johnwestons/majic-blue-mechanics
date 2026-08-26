@@ -17,6 +17,19 @@ local function drawBackground(assets)
     end
 end
 
+local function drawBayDoor(world, assets)
+    local image = assets.get("loadingBayDoor")
+    local quad = assets.getQuad("loadingBayDoor" .. world.bayDoor:frame())
+    local workshop = assets.get("workshop")
+    if not image or not quad or not workshop then return end
+    local scaleX = Config.baseWidth / workshop:getWidth()
+    local scaleY = Config.baseHeight / workshop:getHeight()
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(image, quad,
+        Config.loadingBay.sourceX * scaleX,
+        Config.loadingBay.sourceY * scaleY, 0, scaleX, scaleY)
+end
+
 local function drawServiceLift(job)
     local x, y = Config.serviceBay.bikeX, Config.serviceBay.bikeY
     if not job then return end
@@ -59,11 +72,21 @@ local function drawPartsTruck(state, assets)
         .. DeliveryVehicle.cargoFrame(state, Config.partsDelivery))
     if not truck or not cargo or not cargoQuad then return end
     local origin = Config.partsDelivery.frameSize
+    local aperture = {}
+    for _, point in ipairs(Config.partsDelivery.aperture) do
+        aperture[#aperture + 1] = point.x
+        aperture[#aperture + 1] = point.y
+    end
+    love.graphics.stencil(function()
+        love.graphics.polygon("fill", unpack(aperture))
+    end, "replace", 1)
+    love.graphics.setStencilTest("greater", 0)
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(truck, transform.x, transform.y, 0,
         transform.scale, transform.scale, origin / 2, origin * 0.84)
     love.graphics.draw(cargo, cargoQuad, transform.x, transform.y, 0,
         transform.scale, transform.scale, origin / 2, origin * 0.84)
+    love.graphics.setStencilTest()
 end
 
 local function drawMotorcycleTransport(state, assets)
@@ -99,6 +122,8 @@ end
 
 function Renderer.draw(world, assets, characterAssets, state)
     drawBackground(assets)
+    drawBayDoor(world, assets)
+    drawPartsTruck(state, assets)
     local job = world.currentJob(state)
     drawServiceLift(job)
     local activeCharacters = { [Config.player.character] = true }
@@ -106,8 +131,6 @@ function Renderer.draw(world, assets, characterAssets, state)
     characterAssets.retainCharacters(activeCharacters)
     local actors = {
         { y = Config.serviceBay.bikeY, draw = function() drawMotorcycle(assets, job) end },
-        { y = DeliveryVehicle.transform(state, Config.partsDelivery).y,
-            draw = function() drawPartsTruck(state, assets) end },
         { y = MotorcycleTransport.transform(state, Config.motorcycleTransport).y,
             draw = function() drawMotorcycleTransport(state, assets) end },
         { y = world.player.y, draw = function() drawPlayer(world, characterAssets) end },

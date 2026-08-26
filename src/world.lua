@@ -1,4 +1,5 @@
 local Config = require("src.config")
+local BayDoor = require("src.bay_door")
 local Customer = require("src.customer")
 local Interaction = require("src.interaction")
 local JobService = require("src.job_service")
@@ -18,6 +19,7 @@ local World = {
         animationClock = 0,
     },
     customer = Customer.new(Config.customer),
+    bayDoor = BayDoor.new(Config.loadingBay),
     selectedInteraction = nil,
 }
 
@@ -27,6 +29,8 @@ local function movementObstacles(state)
     local obstacles = {}
     local customerObstacle = World.customer:getObstacle()
     if customerObstacle then obstacles[#obstacles + 1] = customerObstacle end
+    local bayObstacle = World.bayDoor:getObstacle()
+    if bayObstacle then obstacles[#obstacles + 1] = bayObstacle end
     if currentJob(state) then
         obstacles[#obstacles + 1] = {
             x = Config.serviceBay.bikeX,
@@ -52,6 +56,7 @@ local function targets(state)
             prompt = "E: open work-order computer",
         },
     }
+    result[#result + 1] = World.bayDoor:getInteraction()
     local customer = World.customer:getInteraction()
     if customer then result[#result + 1] = customer end
     local delivery = DeliveryVehicle.interaction(state, Config.partsDelivery)
@@ -72,13 +77,18 @@ local function targets(state)
     return result
 end
 
-function World.load(playerPayload, customerPayload)
+function World.load(playerPayload, customerPayload, deliveryPayload)
     World.player.x = playerPayload and playerPayload.x or Config.player.spawnX
     World.player.y = playerPayload and playerPayload.y or Config.player.spawnY
     World.player.facing = playerPayload and playerPayload.facing or 1
     World.player.moving = false
     World.player.animationClock = 0
     World.selectedInteraction = nil
+    World.bayDoor:reset()
+    local deliveryState = deliveryPayload and deliveryPayload.state
+    if deliveryState and deliveryState ~= "absent" and deliveryState ~= "scheduled" then
+        World.bayDoor:holdOpen()
+    end
     World.customer:reset(nil, true)
     if customerPayload then World.customer:restore(customerPayload) end
 end
@@ -90,14 +100,27 @@ end
 function World.update(dt, directionX, directionY, assets, state)
     Procurement.ensure(state)
     DeliveryVehicle.schedule(state, state.procurement, Config.partsDelivery)
-    local deliveryEvent = DeliveryVehicle.update(state, dt, Config.partsDelivery)
-    if deliveryEvent == "parked" then
+    local doorEvent = World.bayDoor:update(dt)
+    if doorEvent == "opened" then
+        state.message = "Loading dock door open. The truck can back into the bay."
+    elseif doorEvent == "closed" then
+        state.message = "Loading dock door closed."
+    end
+    local deliveryEvent = DeliveryVehicle.update(state, dt, Config.partsDelivery,
+        World.bayDoor.state)
+    if deliveryEvent == "request_bay_open" then
+        if World.bayDoor.state == "closed" then World.bayDoor:open() end
+        state.message = "Delivery truck arrived. Opening the loading dock door..."
+    elseif deliveryEvent == "backing_started" then
+        state.message = "The delivery truck is backing into the loading dock."
+    elseif deliveryEvent == "parked" then
         state.message = "The parts delivery truck has backed in. Open its rear cargo door."
     elseif deliveryEvent == "cargo_closed" then
         DeliveryVehicle.depart(state)
         state.message = "Cargo secured. The delivery truck is pulling out."
     elseif deliveryEvent == "departed" then
         state.message = "The parts delivery truck has left the workshop."
+        if World.bayDoor.state == "open" then World.bayDoor:close() end
     end
     local transport = MotorcycleTransport.ensure(state)
     if transport.state == "absent" then
@@ -167,6 +190,8 @@ function World.interact(state)
         state.selectedJobId = selected.jobId
         state.screen = "service"
         return true
+    elseif selected.kind == "loading_bay_door" then
+        return World.toggleBayDoor(state)
     elseif selected.kind == "parts_truck" then
         local delivery = DeliveryVehicle.ensure(state)
         if delivery.state == "parked_closed" then
@@ -210,6 +235,31 @@ function World.customerSnapshot() return World.customer:snapshot() end
 function World.closePartsVan(state)
     if #Procurement.manifest(state) > 0 then return false end
     return DeliveryVehicle.toggleDoor(state)
+end
+
+function World.toggleBayDoor(state)
+    if World.bayDoor.state == "open" and DeliveryVehicle.blocksBayClosure(state) then
+        if state then state.message = "The truck is occupying the dock. Keep the loading door open." end
+        return false
+    end
+    if not World.bayDoor:toggle() then
+        if state then state.message = "Wait for the loading dock door to finish moving." end
+        return false
+    end
+    if state then
+        state.message = World.bayDoor.state == "opening"
+            and "Opening the loading dock door..." or "Closing the loading dock door..."
+    end
+    return true
+end
+
+function World.bayDoorSnapshot() return World.bayDoor:snapshot() end
+
+function World.syncDeliveryDoor(state)
+    local delivery = DeliveryVehicle.ensure(state)
+    if delivery.state ~= "absent" and delivery.state ~= "scheduled" then
+        World.bayDoor:holdOpen()
+    end
 end
 
 function World.draw(assets, characterAssets, state)

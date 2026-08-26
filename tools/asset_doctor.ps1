@@ -40,6 +40,7 @@ $expected = [ordered]@{
     'assets\workshop\workshop-walkmask.png' = @(1536, 1024)
     'assets\delivery\delivery-truck-open.png' = @(512, 512)
     'assets\delivery\truck-cargo-door-strip.png' = @(2560, 512)
+    'assets\delivery\loading-bay-door-strip.png' = @(1300, 260)
     'assets\motorcycles\gsxr-600-service.png' = @(256, 256)
     'assets\motorcycles\gsxr-600-poster.png' = @(128, 128)
     'assets\motorcycles\gsxr-600-action.png' = @(128, 128)

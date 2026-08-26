@@ -57,6 +57,16 @@ local Config = {
         -- starter bay and is kept on the original walkmask's floor area.
         serviceBay = { x = 300, y = 336, radius = 86 },
     },
+    loadingBay = {
+        sourceX = 200,
+        sourceY = 170,
+        frameWidth = 260,
+        frameHeight = 260,
+        frameCount = 5,
+        duration = 0.9,
+        interaction = { x = 300, y = 285, radius = 62 },
+        obstacle = { x = 215, y = 267, radius = 55 },
+    },
     partsDelivery = {
         frameSize = 512,
         cargoFrameCount = 5,
@@ -64,12 +74,16 @@ local Config = {
         backingDuration = 2.2,
         cargoDuration = 0.75,
         maximumOrders = 5,
-        -- The Picture Shop truck backs in along its painted isometric body
-        -- axis and keeps one physical size throughout the maneuver.
-        start = { x = -220, y = 300, scale = 0.50 },
-        parked = { x = 70, y = 420, scale = 0.50 },
-        interaction = { x = 250, y = 430, radius = 88 },
-        obstacle = { offsetX = 12, offsetY = -30, radius = 92 },
+        bodyAxis = { x = 1, y = 0.42 },
+        start = { x = -150, y = 232, scale = 0.94 },
+        parked = { x = 54, y = 318, scale = 0.94 },
+        rearOpeningOffsetX = 160,
+        interaction = { x = 218, y = 310, radius = 58 },
+        obstacle = { offsetX = 0, offsetY = -8, radius = 72 },
+        aperture = {
+            { x = 138, y = 149 }, { x = 270, y = 124 },
+            { x = 270, y = 247 }, { x = 138, y = 273 },
+        },
     },
     motorcycleTransport = {
         scheduleDelay = 2.5,
@@ -162,6 +176,7 @@ local Config = {
         walkmask = "assets/workshop/workshop-walkmask.png",
         deliveryTruck = "assets/delivery/delivery-truck-open.png",
         truckCargoDoor = "assets/delivery/truck-cargo-door-strip.png",
+        loadingBayDoor = "assets/delivery/loading-bay-door-strip.png",
         motorcycleSide = "assets/motorcycles/gsxr-600-service.png",
         motorcyclePoster = "assets/motorcycles/gsxr-600-poster.png",
         motorcycleAction = "assets/motorcycles/gsxr-600-action.png",

@@ -89,7 +89,8 @@ The office computer now separates active work orders, completed service history,
 records, parts inventory, and shop finances. Click a work order for the full complaint, service, parts,
 estimate, and stable record identities; number keys 1–5 change tabs and Up/Down plus Enter opens a
 selected order. Parts must be stocked before a repair. Orders placed in the Parts tab are grouped onto
-the Picture Shop-style box delivery truck; let it back into the workshop, open its animated rear cargo
+the Picture Shop-style box delivery truck. The shared loading dock opens through its five-frame roll-up
+animation before the truck backs into the dock aperture; open the truck's animated rear cargo
 door, inspect the manifest, and receive each package before
 the matching repair can begin.
 

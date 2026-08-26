@@ -11,6 +11,7 @@ Source workspace: `C:\Users\johnw\OneDrive\Documents\ChatGPT\The Picture Shop`
 - `assets/workshop/workshop-walkmask.png` ← `assets/generated/warehouse-layout-final-walkmask.png`
 - `assets/characters/business-{dragon,fox,cat}/{idle,walk,sit}.png` ← matching approved client strips under `assets/generated/characters/`
 - `assets/delivery/delivery-truck-open.png` and `truck-cargo-door-strip.png` ← exact promoted copies of Picture Shop's layered 512×512 delivery truck and five-frame aligned rear cargo-door animation
+- `assets/delivery/loading-bay-door-strip.png` ← exact promoted copy of Picture Shop's five-frame roll-up loading-dock door, aligned to the shared warehouse doorway coordinates
 - `assets/motorcycles/gsxr-600-{side,poster,action}.png` ← matching starter images under `assets/generated/artwork/` (retained as references)
 - `assets/motorcycles/gsxr-600-service.png` ← ImageGen transparent GSX-R service sprite, normalized to the project's 256×256 transparent-sprite contract by `tools/normalize_transparent_sprite.ps1`
 - `assets/motorcycles/{naked-black,vintage-red-standard,black-classic,red-supersport,adventure-silver-red,red-vtwin-cruiser}-service.png` ← generated service-view motorcycle sprites based on the six user-provided motorcycle references

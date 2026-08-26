@@ -38,7 +38,7 @@ end
 
 local function startGame(payload, mode)
     State.applySave(state, payload)
-    World.load(payload.player, payload.customer)
+    World.load(payload.player, payload.customer, payload.delivery)
     if mode == "new" then saveCurrent() end
     if payload.recovered then
         state.message = "Recovered this shop from its last valid backup."

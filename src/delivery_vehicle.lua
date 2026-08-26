@@ -42,12 +42,20 @@ function DeliveryVehicle.schedule(state, procurement, config)
     return true
 end
 
-function DeliveryVehicle.update(state, dt, config)
+function DeliveryVehicle.update(state, dt, config, bayDoorState)
     local delivery = DeliveryVehicle.ensure(state)
     dt = math.max(0, dt or 0)
     if delivery.state == "scheduled" then
         delivery.timer = math.max(0, delivery.timer - dt)
-        if delivery.timer == 0 then delivery.state = "backing"; return "backing_started" end
+        if delivery.timer == 0 then
+            delivery.state = "waiting_for_bay"
+            return "request_bay_open"
+        end
+    elseif delivery.state == "waiting_for_bay" then
+        if bayDoorState == nil or bayDoorState == "open" then
+            delivery.state, delivery.progress = "backing", 0
+            return "backing_started"
+        end
     elseif delivery.state == "backing" then
         delivery.progress = math.min(1,
             delivery.progress + dt / (config.backingDuration or 2.2))
@@ -99,6 +107,11 @@ end
 function DeliveryVehicle.visible(state)
     local value = DeliveryVehicle.ensure(state).state
     return value ~= "absent" and value ~= "scheduled"
+end
+
+function DeliveryVehicle.blocksBayClosure(state)
+    local value = DeliveryVehicle.ensure(state).state
+    return value == "waiting_for_bay" or DeliveryVehicle.visible(state)
 end
 
 function DeliveryVehicle.interaction(state, config)

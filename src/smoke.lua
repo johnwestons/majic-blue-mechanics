@@ -140,15 +140,22 @@ local function runChecks(context)
     local customer = context.characterAssets.get("business-fox", "walk", 1)
     local deliveryTruck = context.assets.get("deliveryTruck")
     local truckCargoDoor = context.assets.get("truckCargoDoor")
+    local loadingBayDoor = context.assets.get("loadingBayDoor")
     check("mechanic_strip_available", mechanic ~= nil)
     check("customer_strip_available", customer ~= nil)
     check("picture_shop_delivery_truck_loaded", deliveryTruck
         and deliveryTruck:getWidth() == 512 and deliveryTruck:getHeight() == 512)
     check("picture_shop_cargo_door_strip_loaded", truckCargoDoor
         and truckCargoDoor:getWidth() == 2560 and truckCargoDoor:getHeight() == 512)
+    check("picture_shop_loading_bay_door_loaded", loadingBayDoor
+        and loadingBayDoor:getWidth() == 1300 and loadingBayDoor:getHeight() == 260)
     for frame = 1, context.config.partsDelivery.cargoFrameCount do
         check("picture_shop_cargo_door_frame_" .. frame,
             context.assets.getQuad("truckCargoDoor" .. frame) ~= nil)
+    end
+    for frame = 1, context.config.loadingBay.frameCount do
+        check("picture_shop_loading_bay_door_frame_" .. frame,
+            context.assets.getQuad("loadingBayDoor" .. frame) ~= nil)
     end
     local standingMetrics = context.characterAssets.normalizedFrameMetrics(
         "business-fox", "idle", 1)
@@ -405,11 +412,23 @@ local function runChecks(context)
     check("parts_truck_groups_waiting_order", context.deliveryVehicle.schedule(serviceState,
         serviceState.procurement, context.config.partsDelivery)
         and purchaseOrder.status == "assigned_to_van")
+    context.world.bayDoor:reset()
     context.deliveryVehicle.update(serviceState, context.config.partsDelivery.scheduleDelay,
-        context.config.partsDelivery)
+        context.config.partsDelivery, context.world.bayDoor.state)
+    check("parts_truck_waits_for_loading_dock",
+        serviceState.delivery.state == "waiting_for_bay")
+    check("loading_dock_begins_opening", context.world.bayDoor:open())
+    check("loading_dock_opens",
+        context.world.bayDoor:update(context.config.loadingBay.duration) == "opened")
+    check("parts_truck_begins_backing_through_open_dock",
+        context.deliveryVehicle.update(serviceState, 0,
+            context.config.partsDelivery, context.world.bayDoor.state) == "backing_started")
     context.deliveryVehicle.update(serviceState, context.config.partsDelivery.backingDuration,
-        context.config.partsDelivery)
+        context.config.partsDelivery, context.world.bayDoor.state)
     check("parts_truck_parks", serviceState.delivery.state == "parked_closed")
+    check("parked_truck_blocks_loading_dock_closure",
+        not context.world.toggleBayDoor(serviceState)
+        and context.world.bayDoor.state == "open")
     check("parts_truck_door_opens", context.deliveryVehicle.toggleDoor(serviceState))
     context.deliveryVehicle.update(serviceState, context.config.partsDelivery.cargoDuration,
         context.config.partsDelivery)
@@ -437,6 +456,8 @@ local function runChecks(context)
         context.deliveryVehicle.update(serviceState,
             context.config.partsDelivery.backingDuration, context.config.partsDelivery)
             == "departed" and serviceState.delivery.state == "absent")
+    check("loading_dock_closes_after_truck_leaves", context.world.toggleBayDoor(serviceState)
+        and context.world.bayDoor:update(context.config.loadingBay.duration) == "closed")
     check("repair_work_order", context.jobService.repair(serviceState, offer.id))
     check("parts_deducted", serviceState.money == cashBeforeParts - offer.partsCost)
     check("repair_consumes_inventory",
@@ -580,9 +601,12 @@ local function runChecks(context)
     context.deliveryVehicle.schedule(deliverySaveState, deliverySaveState.procurement,
         context.config.partsDelivery)
     context.deliveryVehicle.update(deliverySaveState,
-        context.config.partsDelivery.scheduleDelay, context.config.partsDelivery)
+        context.config.partsDelivery.scheduleDelay, context.config.partsDelivery, "closed")
+    context.deliveryVehicle.update(deliverySaveState, 0,
+        context.config.partsDelivery, "open")
     context.deliveryVehicle.update(deliverySaveState,
-        context.config.partsDelivery.backingDuration / 2, context.config.partsDelivery)
+        context.config.partsDelivery.backingDuration / 2,
+        context.config.partsDelivery, "open")
     check("mid_delivery_save_write", context.save.save(2, deliverySaveState,
         { x = 520, y = 480, facing = 1 }))
     local resumedDelivery = context.save.load(2)
@@ -696,6 +720,7 @@ local function runChecks(context)
         context.state.delivery.progress = 1
         context.state.delivery.doorProgress = 1
         context.state.delivery.state = "cargo_open"
+        context.world.syncDeliveryDoor(context.state)
         context.state.screen = preview == "delivery_manifest" and "delivery_manifest" or "world"
     elseif preview == "flatbed_inbound" or preview == "flatbed_outbound" then
         context.state.jobs.active = {}

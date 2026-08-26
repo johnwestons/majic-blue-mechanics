@@ -140,6 +140,23 @@ local function runChecks(context)
     local customer = context.characterAssets.get("business-fox", "walk", 1)
     check("mechanic_strip_available", mechanic ~= nil)
     check("customer_strip_available", customer ~= nil)
+    local standingMetrics = context.characterAssets.normalizedFrameMetrics(
+        "business-fox", "idle", 1)
+    local seatedMetrics = context.characterAssets.normalizedFrameMetrics(
+        "business-fox", "sit", 1)
+    check("customer_actions_share_normalized_height", standingMetrics and seatedMetrics
+        and math.abs(standingMetrics.height - seatedMetrics.height) < 0.01)
+    local mechanicBounds = context.characterAssets.normalizedFrameMetrics(
+        "mechanic-raccoon", "walk", 1)
+    check("mechanic_visible_frame_metrics_available", mechanicBounds
+        and mechanicBounds.width > 0 and mechanicBounds.height > 0)
+    local cleanMechanicWalk = true
+    for step = 0, 11 do
+        local frame = context.characterAssets.animationFrame(
+            "mechanic-raccoon", "walk", step / 5.2, 5.2)
+        cleanMechanicWalk = cleanMechanicWalk and frame ~= 3 and frame ~= 4
+    end
+    check("mechanic_walk_skips_clipped_source_frames", cleanMechanicWalk)
     local charactersHealthy = context.characterAssets.assertHealthy()
     check("character_contracts_healthy", charactersHealthy)
 

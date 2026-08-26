@@ -1,14 +1,13 @@
--- Stable floor-contact anchors inherited from Picture Shop's approved client
--- strips. Mouse Frontier's mechanic raccoon strips use their canonical
--- 512-pixel bottom baseline.
+-- Stable visible floor-contact anchors. The mechanic used to anchor against
+-- the empty bottom of its 512px cells, which offset every animation pose.
 return {
     ["mechanic-raccoon"] = {
-        idle = { { x = 256, y = 512 }, { x = 256, y = 512 } },
+        idle = { { x = 256, y = 457 }, { x = 255.5, y = 457 } },
         walk = {
-            { x = 256, y = 512 }, { x = 256, y = 512 }, { x = 256, y = 512 },
-            { x = 256, y = 512 }, { x = 256, y = 512 }, { x = 256, y = 512 },
+            { x = 256, y = 457 }, { x = 255.5, y = 457 }, { x = 255.5, y = 457 },
+            { x = 256, y = 457 }, { x = 255.5, y = 457 }, { x = 256, y = 457 },
         },
-        use = { { x = 256, y = 512 }, { x = 256, y = 512 }, { x = 256, y = 512 } },
+        use = { { x = 255.5, y = 457 }, { x = 255.5, y = 457 }, { x = 255.5, y = 457 } },
     },
     ["business-dragon"] = {
         idle = { { x = 255.5, y = 477 }, { x = 255.5, y = 477 } },

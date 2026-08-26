@@ -7,13 +7,25 @@ local Config = {
         spawnX = 520,
         spawnY = 480,
         speed = 155,
-        maxWidth = 154,
-        maxHeight = 154,
+        maxWidth = 132,
+        maxHeight = 112,
+    },
+    characterRendering = {
+        -- Match Picture Shop's visible-frame normalization. Every action is
+        -- measured against the same source height before fitting the shop.
+        referenceHeight = 256,
+        -- Source walk cells 3 and 4 have clipped head/goggle artwork. As with
+        -- Picture Shop's approved walk cycles, animate only clean poses.
+        frameSequences = {
+            ["mechanic-raccoon"] = {
+                walk = { 1, 2, 5, 6, 5, 2 },
+            },
+        },
     },
     customer = {
         characterPool = { "business-dragon", "business-fox", "business-cat" },
-        maxWidth = 174,
-        maxHeight = 174,
+        maxWidth = 132,
+        maxHeight = 112,
         speed = 72,
         walkAnimationRate = 4,
         initialArrivalDelayMin = 2,

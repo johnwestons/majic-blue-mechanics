@@ -181,9 +181,8 @@ function Instance:draw(characterAssets)
     if not self.visible then return end
     local action = (self.state == "waiting" or self.state == "reviewing") and "sit"
         or (self:isMoving() and "walk" or "idle")
-    local poseScale = action == "sit" and 1.75 or 1
     local drew = characterAssets.draw(self.character, action, self.x, self.y,
-        self.maxWidth * poseScale, self.maxHeight * poseScale, self.facing, self.animationClock,
+        self.maxWidth, self.maxHeight, self.facing, self.animationClock,
         action == "walk" and self.walkAnimationRate or 0.7)
     if not drew then
         love.graphics.setColor(0.18, 0.30, 0.20)

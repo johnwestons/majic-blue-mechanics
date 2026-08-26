@@ -14,21 +14,24 @@ These boundaries deliberately carry forward the proven Picture Shop and Mouse Fr
 - `src/jobs.lua` remains a pure domain module. It must not read game state or draw.
 - New gameplay requires a deterministic smoke-test checkpoint before it is considered stable.
 - Reference/source assets are never overwritten during preparation. Promoted runtime assets receive stable filenames and provenance notes.
-- Generated transparent motorcycle art is normalized through `tools/normalize_transparent_sprite.ps1` before runtime use; source-resolution renders remain beside the promoted sprite.
+- Generated transparent motorcycle, repair-part, and repair-tool art is normalized through `tools/normalize_transparent_sprite.ps1` before runtime use; source-resolution renders remain beside the promoted sprite.
 - Do not draw artificial circular or elliptical shadows beneath sprites. Collision footprints follow visible floor contact, not the full PNG canvas.
 
 ## Module map
 
 - `src/app.lua`: composition root and screen routing
 - `src/state.lua`: new-game defaults and save application
-- `src/save.lua`: three versioned, validated local save slots with backups
+- `src/save.lua` and `src/save_schema.lua`: migrated, reconciled, validated local slots with backups
 - `src/assets.lua`: core image loading and validation
 - `src/character_assets.lua`: lazy character-strip loading and nearest-neighbor quads
-- `src/input.lua`: keyboard and mouse routing
+- `src/input.lua` and `src/controller.lua`: keyboard, mouse, and gamepad routing
 - `src/navigation.lua`: walkmask and obstacle checks
 - `src/interaction.lua`: proximity selection
-- `src/world.lua`: player, customer, workshop, and service-bay simulation/rendering
+- `src/world.lua` and `src/world_renderer.lua`: workshop simulation and depth-sorted presentation
 - `src/jobs.lua`: motorcycle estimate and legal stage transitions
+- `src/repair_tasks.lua`: data-only mappings from work orders to parts, tools, gestures, and work points
+- `src/repair_minigame.lua`: repair interaction state, gesture recognition, and completion rules
 - `src/job_service.lua`: economy and work-order orchestration
-- `src/screens/`: title, HUD, estimate, computer, service, and startup-error presentation
+- `src/procurement.lua`, `src/delivery_vehicle.lua`, and `src/motorcycle_transport.lua`: parts and vehicle lifecycles
+- `src/screens/`: title, HUD, estimate, computer, manifests, service, road-test, and startup-error presentation
 - `src/smoke.lua`: deterministic in-engine checks

@@ -1,7 +1,8 @@
 local State = require("src.state")
+local SaveSchema = require("src.save_schema")
 
 local Save = {
-    version = 1,
+    version = SaveSchema.version,
     slotCount = 3,
 }
 
@@ -49,20 +50,7 @@ local function serialize(value, indent, seen)
 end
 
 local function validate(payload)
-    if type(payload) ~= "table" then return false, "save payload is not a table" end
-    if payload.saveVersion ~= Save.version then return false, "unsupported save version" end
-    if type(payload.money) ~= "number" or payload.money < 0 then return false, "invalid shop money" end
-    if type(payload.nextJobNumber) ~= "number" or payload.nextJobNumber < 1 then
-        return false, "invalid next job number"
-    end
-    if type(payload.jobs) ~= "table"
-        or type(payload.jobs.active) ~= "table"
-        or type(payload.jobs.completed) ~= "table"
-        or type(payload.jobs.declined) ~= "table"
-    then
-        return false, "invalid job archive"
-    end
-    return true
+    return SaveSchema.validate(payload)
 end
 
 local function decode(filePath)
@@ -72,12 +60,14 @@ local function decode(filePath)
     if not chunk then return nil, loadError end
     local ok, payload = pcall(chunk)
     if not ok then return nil, payload end
-    local valid, validationError = validate(payload)
+    local migrated, migrationError = SaveSchema.migrate(payload)
+    if not migrated then return nil, migrationError end
+    local valid, validationError = validate(migrated)
     if not valid then return nil, validationError end
-    return payload
+    return migrated
 end
 
-local function persistentPayload(slot, state, worldSnapshot)
+local function persistentPayload(slot, state, worldSnapshot, customerSnapshot)
     return {
         saveVersion = Save.version,
         activeSlot = slot,
@@ -89,6 +79,12 @@ local function persistentPayload(slot, state, worldSnapshot)
         jobs = state.jobs,
         message = state.message,
         player = worldSnapshot,
+        customer = customerSnapshot,
+        pendingOffer = state.pendingOffer,
+        inventory = state.inventory,
+        procurement = state.procurement,
+        delivery = state.delivery,
+        motorcycleTransport = state.motorcycleTransport,
     }
 end
 
@@ -97,9 +93,9 @@ function Save.newGame(slot)
     return State.newGame(slot)
 end
 
-function Save.save(slot, state, worldSnapshot)
+function Save.save(slot, state, worldSnapshot, customerSnapshot)
     if not validateSlot(slot) then return false, "save slot must be 1, 2, or 3" end
-    local payload = persistentPayload(slot, state, worldSnapshot)
+    local payload = persistentPayload(slot, state, worldSnapshot, customerSnapshot)
     local ok, encoded = pcall(function() return "return " .. serialize(payload) .. "\n" end)
     if not ok then return false, encoded end
 

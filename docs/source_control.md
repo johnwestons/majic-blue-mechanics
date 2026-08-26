@@ -23,6 +23,7 @@ Ignoring a file does not authorize deleting it. Cleanup or archival of source ar
 Before a gameplay or asset-changing commit:
 
 1. Run `RUN_SMOKE_TEST.bat`.
-2. Run `powershell -ExecutionPolicy Bypass -File tools/asset_doctor.ps1`.
-3. Inspect `git status --short --ignored` and the staged file list.
-4. Confirm no configured runtime path is ignored.
+2. Run `RUN_VISUAL_TESTS.bat` and inspect `output/visual-regression/`.
+3. Run `powershell -ExecutionPolicy Bypass -File tools/asset_doctor.ps1`.
+4. Inspect `git status --short --ignored` and the staged file list.
+5. Confirm no configured runtime path is ignored.

@@ -1,7 +1,9 @@
 local Jobs = require("src.jobs")
+local BackButton = require("src.screens.back_button")
 local Ui = require("src.screens.ui")
 
 local ServiceScreen = {}
+local CLOSE = { x = 674, y = 540, width = 134, height = 38 }
 
 local stageButtons = {
     diagnosis = { action = "diagnose", hotkey = "D", label = "Run diagnosis" },
@@ -18,7 +20,7 @@ function ServiceScreen.draw(state, assets, mouseX, mouseY)
     if not job then
         Ui.label("This motorcycle is no longer in the service queue.", 150, 160, 660,
             { 0.92, 0.62, 0.50 }, "center")
-        Ui.button(674, 548, 138, 36, "Close", "ESC", mouseX, mouseY)
+        BackButton.draw(CLOSE, "CLOSE", mouseX, mouseY)
         return
     end
 
@@ -62,11 +64,11 @@ function ServiceScreen.draw(state, assets, mouseX, mouseY)
     if button then
         Ui.button(148, 536, 342, 44, button.label, button.hotkey, mouseX, mouseY, true)
     end
-    Ui.button(674, 540, 134, 38, "Close", "ESC", mouseX, mouseY)
+    BackButton.draw(CLOSE, "CLOSE", mouseX, mouseY)
 end
 
 function ServiceScreen.hit(state, x, y)
-    if Ui.contains(674, 540, 134, 38, x, y) then return "close" end
+    if BackButton.contains(CLOSE, x, y) then return "close" end
     if Ui.contains(148, 536, 342, 44, x, y) then
         local job
         for _, candidate in ipairs(state.jobs.active) do

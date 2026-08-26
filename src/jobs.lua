@@ -1,12 +1,21 @@
 -- Pure motorcycle work-order rules. Rendering, saves, and player state are
 -- deliberately kept outside this module.
 local Jobs = {}
+local StatusLabels = require("src.status_labels")
+
+local function randomIndex(count)
+    if type(love) == "table" and love.math and love.math.random then
+        return love.math.random(count)
+    end
+    return math.random(count)
+end
 
 local templates = {
     {
         owner = "Mara Fox", company = "Fox Courier Co.",
         year = 2021, make = "Yamaha", model = "MT-07",
         service = "Oil and filter service",
+        repairKind = "oil",
         complaint = "The oil light flickers after long delivery runs.",
         diagnosis = "Oil is worn and the filter is restricted; no metal found.",
         parts = { "4 qt synthetic oil", "oil filter", "drain washer" },
@@ -17,6 +26,7 @@ local templates = {
         owner = "Dax Ember", company = "Ember Track Days",
         year = 1983, make = "Yamaha", model = "XV750 Virago",
         service = "Front brake overhaul",
+        repairKind = "brake",
         complaint = "The front lever pulses and feels soft under hard braking.",
         diagnosis = "Front pads are glazed and the fluid contains moisture.",
         parts = { "front brake pads", "DOT 4 fluid", "caliper seals" },
@@ -27,6 +37,7 @@ local templates = {
         owner = "Toby Copper", company = "Copper Trail Club",
         year = 1997, make = "Honda", model = "Shadow VLX",
         service = "Chain and sprocket replacement",
+        repairKind = "chain",
         complaint = "The chain clunks on takeoff and needs adjustment every ride.",
         diagnosis = "The chain has tight links and both sprockets are hooked.",
         parts = { "sealed drive chain", "front sprocket", "rear sprocket" },
@@ -37,6 +48,7 @@ local templates = {
         owner = "Cleo Vale", company = "Vale Night Riders",
         year = 2008, make = "Suzuki", model = "GSX-R750",
         service = "Charging-system diagnosis",
+        repairKind = "stator",
         complaint = "The battery goes flat if the bike sits at idle with the lights on.",
         diagnosis = "Stator output is low and the connector shows heat damage.",
         parts = { "replacement stator", "stator gasket", "connector kit" },
@@ -47,6 +59,7 @@ local templates = {
         owner = "Nia Ridge", company = "Ridgeback Tours",
         year = 2022, make = "BMW", model = "R 1250 GS",
         service = "Adventure suspension setup",
+        repairKind = "suspension",
         complaint = "The front end dives under braking with camping gear loaded.",
         diagnosis = "Fork preload is low and the rear sag is outside touring setup.",
         parts = { "fork oil", "preload collar", "suspension seals" },
@@ -57,6 +70,7 @@ local templates = {
         owner = "Rex Harbor", company = "Harbor Line Customs",
         year = 2016, make = "Harley-Davidson", model = "Street Bob",
         service = "Belt-drive and idle service",
+        repairKind = "belt",
         complaint = "The belt chirps at low speed and the idle hunts at stoplights.",
         diagnosis = "Belt alignment is off and the throttle body needs a clean service.",
         parts = { "drive belt", "idler pulley", "throttle-body gasket" },
@@ -67,6 +81,7 @@ local templates = {
         owner = "Jules Summit", company = "Summit Backroads",
         year = 2024, make = "Honda", model = "Africa Twin",
         service = "Spoked-wheel and luggage inspection",
+        repairKind = "spoke",
         complaint = "The bike pulls left after a long gravel trip with panniers loaded.",
         diagnosis = "Rear wheel alignment is out and the spoke tension is uneven.",
         parts = { "spoke set", "wheel bearings", "alignment shims" },
@@ -77,6 +92,7 @@ local templates = {
         owner = "Owen Birch", company = "Birch & Iron Tours",
         year = 2020, make = "Ural", model = "Classic Solo",
         service = "Carburetor synchronization",
+        repairKind = "carb",
         complaint = "The engine surges at cruise and the idle drops when warm.",
         diagnosis = "The twin carburetors are out of balance and the intake boots are aging.",
         parts = { "intake boots", "carb gaskets", "spark plugs" },
@@ -87,6 +103,7 @@ local templates = {
         owner = "Greta Falk", company = "Falk Vintage Club",
         year = 1940, make = "BMW", model = "R24",
         service = "Vintage magneto and valve service",
+        repairKind = "magneto",
         complaint = "The old single starts reluctantly and ticks loudly at idle.",
         diagnosis = "Valve clearances are tight and the magneto points need dressing.",
         parts = { "valve cover gasket", "magneto points", "plug wire" },
@@ -97,6 +114,7 @@ local templates = {
         owner = "Kai Mercer", company = "Mercer Night Ride",
         year = 2023, make = "Honda", model = "Rebel 500",
         service = "Cooling and drive-chain service",
+        repairKind = "coolant",
         complaint = "The fan runs often and the chain snaps during low-speed shifts.",
         diagnosis = "Coolant is below the mark and the chain has several seized links.",
         parts = { "coolant", "sealed drive chain", "chain adjuster set" },
@@ -119,34 +137,44 @@ function Jobs.formatId(sequence)
 end
 
 function Jobs.createOffer(sequence)
-    local template = copy(templates[(sequence - 1) % #templates + 1])
+    -- A client owns the problem details, while the motorcycle is selected
+    -- independently from the available fleet. The offer is then persisted by
+    -- the service layer, so it will not reroll while the client is being
+    -- reviewed or after the job is accepted.
+    local problem = copy(templates[randomIndex(#templates)])
+    local bike = copy(templates[randomIndex(#templates)])
     local shopSupplies = 18 + ((sequence - 1) % 3) * 6
-    local subtotal = template.partsCost + template.labor + shopSupplies
-    local tax = math.floor(template.partsCost * 0.06 + 0.5)
+    local subtotal = problem.partsCost + problem.labor + shopSupplies
+    local tax = math.floor(problem.partsCost * 0.06 + 0.5)
     return {
         id = Jobs.formatId(sequence),
         sequence = sequence,
-        owner = template.owner,
-        company = template.company,
+        clientId = string.format("CLIENT-%04d", sequence),
+        motorcycleId = string.format("BIKE-%04d", sequence),
+        owner = problem.owner,
+        company = problem.company,
         bike = {
-            year = template.year,
-            make = template.make,
-            model = template.model,
+            year = bike.year,
+            make = bike.make,
+            model = bike.model,
             mileage = 6400 + sequence * 1731,
         },
-        service = template.service,
-        complaint = template.complaint,
-        diagnosis = template.diagnosis,
-        parts = template.parts,
-        partsCost = template.partsCost,
-        labor = template.labor,
+        service = problem.service,
+        repairKind = problem.repairKind,
+        transportRequired = problem.repairKind == "stator"
+            or problem.repairKind == "magneto" or problem.repairKind == "suspension",
+        complaint = problem.complaint,
+        diagnosis = problem.diagnosis,
+        parts = problem.parts,
+        partsCost = problem.partsCost,
+        labor = problem.labor,
         shopSupplies = shopSupplies,
         tax = tax,
         quote = subtotal + tax,
-        difficulty = template.difficulty,
-        hours = template.hours,
-        bikeKey = template.bikeKey,
-        artwork = template.bikeKey and ("motorcycleService_" .. template.bikeKey) or template.artwork,
+        difficulty = problem.difficulty,
+        hours = problem.hours,
+        bikeKey = bike.bikeKey,
+        artwork = bike.bikeKey and ("motorcycleService_" .. bike.bikeKey) or bike.artwork,
         status = "offered",
         stage = "estimate",
         partsPurchased = false,
@@ -192,7 +220,8 @@ local function transition(job, expectedStatus, expectedStage, nextStatus, nextSt
 end
 
 function Jobs.accept(job)
-    return transition(job, "offered", "estimate", "active", "diagnosis")
+    return transition(job, "offered", "estimate", "active",
+        job.transportRequired and "awaiting_dropoff" or "diagnosis")
 end
 
 function Jobs.decline(job)
@@ -215,21 +244,26 @@ function Jobs.repair(job)
 end
 
 function Jobs.completeTest(job)
-    local ok, message = transition(job, "active", "road_test", "completed", "complete")
-    if ok then job.checklist.roadTested = true end
+    local nextStage = job.transportRequired and "pickup_transport" or "ready_for_pickup"
+    local ok, message = transition(job, "active", "road_test", "active", nextStage)
+    if ok then
+        job.checklist.roadTested = true
+        if not job.transportRequired then job.pickupTimer = 0 end
+    end
     return ok, message
 end
 
+function Jobs.receiveDropoff(job)
+    return transition(job, "active", "awaiting_dropoff", "active", "diagnosis")
+end
+
+function Jobs.completePickup(job)
+    return transition(job, "active", job.transportRequired and "pickup_transport"
+        or "ready_for_pickup", "completed", "complete")
+end
+
 function Jobs.stageLabel(job)
-    local labels = {
-        estimate = "Estimate",
-        diagnosis = "Awaiting diagnosis",
-        repair = "Ready for repair",
-        road_test = "Ready for road test",
-        complete = "Completed",
-        closed = "Declined",
-    }
-    return labels[job and job.stage] or "Unknown"
+    return StatusLabels.get(job and job.stage)
 end
 
 function Jobs.isActive(job) return type(job) == "table" and job.status == "active" end

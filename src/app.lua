@@ -2,6 +2,9 @@ local AssetErrorScreen = require("src.screens.asset_error_screen")
 local Assets = require("src.assets")
 local CharacterAssets = require("src.character_assets")
 local ComputerScreen = require("src.screens.computer_screen")
+local Controller = require("src.controller")
+local DeliveryManifestScreen = require("src.screens.delivery_manifest_screen")
+local DeliveryVehicle = require("src.delivery_vehicle")
 local Config = require("src.config")
 local Hud = require("src.screens.hud")
 local Input = require("src.input")
@@ -9,9 +12,13 @@ local JobOfferScreen = require("src.screens.job_offer_screen")
 local JobService = require("src.job_service")
 local Jobs = require("src.jobs")
 local Navigation = require("src.navigation")
+local MotorcycleTransport = require("src.motorcycle_transport")
+local Procurement = require("src.procurement")
 local Save = require("src.save")
+local SaveSchema = require("src.save_schema")
 local ServiceScreen = require("src.screens.service_screen")
 local RepairMinigameScreen = require("src.screens.repair_minigame_screen")
+local RoadTestScreen = require("src.screens.road_test_screen")
 local Smoke = require("src.smoke")
 local State = require("src.state")
 local TitleScreen = require("src.screens.title_screen")
@@ -20,17 +27,18 @@ local World = require("src.world")
 
 local App = {}
 local state = State.new()
+local controller = nil
 
 local function saveCurrent()
     if not state.activeSlot then return false end
-    local ok, message = Save.save(state.activeSlot, state, World.snapshot())
+    local ok, message = Save.save(state.activeSlot, state, World.snapshot(), World.customerSnapshot())
     if not ok then state.message = "Save failed: " .. tostring(message) end
     return ok
 end
 
 local function startGame(payload, mode)
     State.applySave(state, payload)
-    World.load(payload.player)
+    World.load(payload.player, payload.customer)
     if mode == "new" then saveCurrent() end
     if payload.recovered then
         state.message = "Recovered this shop from its last valid backup."
@@ -50,8 +58,10 @@ local inputContext = {
     jobService = JobService,
     jobOfferScreen = JobOfferScreen,
     computerScreen = ComputerScreen,
+    deliveryManifestScreen = DeliveryManifestScreen,
     serviceScreen = ServiceScreen,
     repairMinigameScreen = RepairMinigameScreen,
+    roadTestScreen = RoadTestScreen,
     saveCurrent = saveCurrent,
     returnToTitle = returnToTitle,
 }
@@ -66,6 +76,14 @@ function App.load()
     if Smoke.requested() then love.filesystem.setIdentity("majic-blue-mechanics-smoke") end
     Assets.load()
     CharacterAssets.load()
+    controller = Controller.new({
+        pressKey = function(key) return Input.keypressed(key, inputContext) end,
+        pressPointer = function(x, y, button)
+            return Input.mousepressed(x, y, button, inputContext)
+        end,
+        screenInfo = function() return state.screen, TitleScreen.confirm end,
+        worldMenuAction = returnToTitle,
+    })
     state.assetErrors = {}
     addErrors(state.assetErrors, Assets.assertHealthy())
     addErrors(state.assetErrors, CharacterAssets.assertHealthy())
@@ -84,11 +102,20 @@ function App.load()
             assets = Assets,
             characterAssets = CharacterAssets,
             config = Config,
+            computerScreen = ComputerScreen,
+            Controller = Controller,
+            deliveryManifestScreen = DeliveryManifestScreen,
+            deliveryVehicle = DeliveryVehicle,
             jobs = Jobs,
             jobService = JobService,
+            input = Input,
             repairMinigameScreen = RepairMinigameScreen,
+            roadTestScreen = RoadTestScreen,
             navigation = Navigation,
+            motorcycleTransport = MotorcycleTransport,
+            procurement = Procurement,
             save = Save,
+            saveSchema = SaveSchema,
             state = state,
             State = State,
             world = World,
@@ -97,9 +124,17 @@ function App.load()
 end
 
 function App.update(dt)
+    if controller then controller:update(dt) end
     if state.screen == "world" then
         local directionX, directionY = Input.movement()
-        World.update(dt, directionX, directionY, Assets, state)
+        local _, saveNeeded = World.update(dt, directionX, directionY, Assets, state)
+        if saveNeeded then saveCurrent() end
+    elseif state.screen == "road_test" then
+        local directionX, throttle, brake, sprint = Input.roadTestMovement()
+        local action = RoadTestScreen.update(state, dt, directionX, throttle, brake, sprint)
+        if action then Input.completeRoadTest(action, inputContext) end
+    elseif state.screen == "repair_minigame" then
+        RepairMinigameScreen.update(state, dt)
     end
 end
 
@@ -108,6 +143,10 @@ function App.draw()
     Viewport.beginDraw(Config.baseWidth, Config.baseHeight)
     local mouseX, mouseY = love.mouse.getPosition()
     mouseX, mouseY = Viewport.toGame(mouseX, mouseY, Config.baseWidth, Config.baseHeight)
+    if controller and controller:isActive() and state.screen ~= "world"
+        and state.screen ~= "road_test" then
+        mouseX, mouseY = controller:pointer()
+    end
     if state.screen == "asset_error" then
         CharacterAssets.retainCharacters({})
         AssetErrorScreen.draw(state.assetErrors)
@@ -122,12 +161,17 @@ function App.draw()
             JobOfferScreen.draw(state, Assets, mouseX, mouseY)
         elseif state.screen == "computer" then
             ComputerScreen.draw(state, mouseX, mouseY)
+        elseif state.screen == "delivery_manifest" then
+            DeliveryManifestScreen.draw(state, mouseX, mouseY)
         elseif state.screen == "service" then
             ServiceScreen.draw(state, Assets, mouseX, mouseY)
         elseif state.screen == "repair_minigame" then
             RepairMinigameScreen.draw(state, Assets, mouseX, mouseY)
+        elseif state.screen == "road_test" then
+            RoadTestScreen.draw(state, Assets, mouseX, mouseY)
         end
     end
+    if controller then controller:draw() end
     Viewport.endDraw()
     Smoke.drawn()
 end
@@ -157,5 +201,13 @@ function App.mousereleased(x, y, button)
 end
 
 function App.quit() saveCurrent() end
+
+function App.gamepadpressed(joystick, button)
+    return controller and controller:gamepadpressed(joystick, button)
+end
+
+function App.gamepadreleased(joystick, button)
+    return controller and controller:gamepadreleased(joystick, button)
+end
 
 return App

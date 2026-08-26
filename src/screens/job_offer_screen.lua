@@ -1,12 +1,15 @@
 local Ui = require("src.screens.ui")
+local BackButton = require("src.screens.back_button")
 
 local JobOfferScreen = {}
+local CLOSE = { x = 400, y = 540, width = 164, height = 42 }
 
 function JobOfferScreen.draw(state, assets, mouseX, mouseY)
     local job = state.pendingOffer
     Ui.panel(112, 72, 736, 534, "CUSTOMER ESTIMATE  •  " .. (job and job.id or "NO ORDER"))
     if not job then
         Ui.label("No estimate is waiting.", 150, 150, 660, { 0.92, 0.62, 0.50 }, "center")
+        BackButton.draw(CLOSE, "BACK", mouseX, mouseY)
         return
     end
 
@@ -23,6 +26,9 @@ function JobOfferScreen.draw(state, assets, mouseX, mouseY)
         350, 180, 450, { 0.86, 0.89, 0.84 })
     Ui.label(job.service .. "  •  " .. job.difficulty, 350, 208, 450,
         { 0.58, 0.90, 0.92 })
+    Ui.label(job.transportRequired and "DROP-OFF  •  MAJIC BLUE RECOVERY FLATBED"
+        or "DROP-OFF  •  CUSTOMER RIDE-IN", 350, 234, 450,
+        job.transportRequired and { 0.95, 0.70, 0.45 } or { 0.68, 0.78, 0.77 })
 
     Ui.label("CUSTOMER COMPLAINT", 154, 274, 240, { 0.90, 0.84, 0.57 })
     Ui.label(job.complaint, 154, 302, 650, { 0.82, 0.86, 0.82 })
@@ -41,12 +47,13 @@ function JobOfferScreen.draw(state, assets, mouseX, mouseY)
 
     Ui.button(154, 540, 226, 42, "Accept job", "A", mouseX, mouseY)
     Ui.button(584, 540, 206, 42, "Decline", "D", mouseX, mouseY)
-    Ui.label("Escape: decide later", 390, 553, 184, { 0.56, 0.64, 0.62 }, "center")
+    BackButton.draw(CLOSE, "DECIDE LATER", mouseX, mouseY)
 end
 
 function JobOfferScreen.hit(x, y)
     if Ui.contains(154, 540, 226, 42, x, y) then return "accept" end
     if Ui.contains(584, 540, 206, 42, x, y) then return "decline" end
+    if BackButton.contains(CLOSE, x, y) then return "close" end
 end
 
 return JobOfferScreen

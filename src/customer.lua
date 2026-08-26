@@ -13,6 +13,18 @@ local function distanceSquared(a, b)
     return dx * dx + dy * dy
 end
 
+local function randomDelay(minimum, maximum, fallback)
+    minimum = tonumber(minimum)
+    maximum = tonumber(maximum)
+    if not minimum and not maximum then return math.max(0, tonumber(fallback) or 1) end
+    minimum = minimum or maximum
+    maximum = maximum or minimum
+    if maximum < minimum then minimum, maximum = maximum, minimum end
+    local random = type(love) == "table" and love.math and love.math.random
+        and love.math.random() or math.random()
+    return minimum + (maximum - minimum) * random
+end
+
 local function moveToward(instance, target, distance)
     local dx, dy = target.x - instance.x, target.y - instance.y
     local length = math.sqrt(dx * dx + dy * dy)
@@ -40,15 +52,26 @@ function Customer.new(definition)
         maxWaitSeconds = definition.maxWaitSeconds or 300,
         speed = definition.speed or 72,
         walkAnimationRate = definition.walkAnimationRate or 4,
+        initialArrivalDelayMin = definition.initialArrivalDelayMin,
+        initialArrivalDelayMax = definition.initialArrivalDelayMax,
+        arrivalDelayMin = definition.arrivalDelayMin,
+        arrivalDelayMax = definition.arrivalDelayMax,
         arrivalDelay = definition.arrivalDelay or 1,
         interactionRadius = definition.interactionRadius or 58,
         routeTemplate = copyRoute(definition.route),
     }, Instance)
-    instance:reset(definition.arrivalDelay)
+    instance:reset(nil, true)
     return instance
 end
 
-function Instance:reset(delay)
+function Instance:nextDelay(initialVisit)
+    if initialVisit then
+        return randomDelay(self.initialArrivalDelayMin, self.initialArrivalDelayMax, self.arrivalDelay)
+    end
+    return randomDelay(self.arrivalDelayMin, self.arrivalDelayMax, self.arrivalDelay)
+end
+
+function Instance:reset(delay, initialVisit)
     self.route = copyRoute(self.routeTemplate)
     if type(self.characterPool) == "table" and #self.characterPool > 0 then
         self.characterIndex = self.characterIndex % #self.characterPool + 1
@@ -64,7 +87,7 @@ function Instance:reset(delay)
     self.x, self.y = spawn.x, spawn.y
     self.state = "scheduled"
     self.visible = false
-    self.timer = delay or self.arrivalDelay
+    self.timer = type(delay) == "number" and math.max(0, delay) or self:nextDelay(initialVisit)
     self.waypoint = 2
     self.facing = 1
     self.animationClock = 0
@@ -150,7 +173,9 @@ function Instance:getObstacle()
     return { x = self.x, y = self.y, radius = 16 }
 end
 
-function Instance:isMoving() return self.state == "entering" or self.state == "exiting" end
+function Instance:isMoving()
+    return (self.state == "entering" or self.state == "exiting") and self.visible == true
+end
 
 function Instance:draw(characterAssets)
     if not self.visible then return end
@@ -167,7 +192,38 @@ function Instance:draw(characterAssets)
 end
 
 function Instance:snapshot()
-    return { state = self.state, x = self.x, y = self.y, visible = self.visible }
+    return {
+        state = self.state, x = self.x, y = self.y, visible = self.visible,
+        timer = self.timer, waitTimer = self.waitTimer, waypoint = self.waypoint,
+        facing = self.facing, animationClock = self.animationClock,
+        characterIndex = self.characterIndex, seatIndex = self.seatIndex,
+        decision = self.decision,
+    }
+end
+
+function Instance:restore(snapshot)
+    if type(snapshot) ~= "table" then return false end
+    local allowed = { scheduled = true, entering = true, waiting = true,
+        reviewing = true, exiting = true, finished = true }
+    if not allowed[snapshot.state] then return false end
+    self.characterIndex = math.max(1, math.floor(tonumber(snapshot.characterIndex) or 1))
+    self.seatIndex = math.max(1, math.floor(tonumber(snapshot.seatIndex) or 1))
+    -- reset advances to the saved selections and reconstructs the matching route.
+    self.characterIndex = self.characterIndex - 1
+    self.seatIndex = self.seatIndex - 1
+    self:reset(tonumber(snapshot.timer) or 0, false)
+    self.state = snapshot.state == "reviewing" and "waiting" or snapshot.state
+    self.x = tonumber(snapshot.x) or self.x
+    self.y = tonumber(snapshot.y) or self.y
+    self.visible = snapshot.visible == true and self.state ~= "scheduled" and self.state ~= "finished"
+    self.timer = math.max(0, tonumber(snapshot.timer) or self.timer)
+    self.waitTimer = math.max(0, tonumber(snapshot.waitTimer) or 0)
+    self.waypoint = math.max(1, math.min(#self.route,
+        math.floor(tonumber(snapshot.waypoint) or self.waypoint)))
+    self.facing = snapshot.facing == -1 and -1 or 1
+    self.animationClock = math.max(0, tonumber(snapshot.animationClock) or 0)
+    self.decision = snapshot.decision
+    return true
 end
 
 Customer.Instance = Instance

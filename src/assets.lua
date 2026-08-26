@@ -45,12 +45,41 @@ function Assets.load()
     loadImage("motorcycleSide", Config.paths.motorcycleSide)
     loadImage("motorcyclePoster", Config.paths.motorcyclePoster)
     loadImage("motorcycleAction", Config.paths.motorcycleAction)
+    for key, path in pairs(Config.paths.repairParts or {}) do
+        loadImage("repairPart_" .. key, path)
+    end
+    for key, path in pairs(Config.paths.repairTools or {}) do
+        loadImage("repairTool_" .. key, path)
+    end
     for index, path in ipairs(Config.paths.diagnosticReader or {}) do
         loadImage("diagnosticReader" .. string.format("%02d", index), path)
+    end
+    if Config.paths.roadTest then
+        loadImage("roadTestBackground", Config.paths.roadTest.background)
+        loadImage("roadTestRunnerHorizon", Config.paths.roadTest.runnerHorizon)
+        loadImage("roadTestRunnerRoad", Config.paths.roadTest.runnerRoad)
+        loadImage("roadTestRunnerCity", Config.paths.roadTest.runnerCity)
+        loadImage("roadTestRunnerLeftSection", Config.paths.roadTest.runnerLeftSection)
+        loadImage("roadTestRunnerRightSection", Config.paths.roadTest.runnerRightSection)
+        for index, path in ipairs(Config.paths.roadTest.runnerGraffiti or {}) do
+            loadImage("roadTestGraffiti" .. string.format("%02d", index), path)
+        end
+        for index, path in ipairs(Config.paths.roadTest.traffic or {}) do
+            loadImage("roadTestTraffic" .. string.format("%02d", index), path)
+        end
+        for index, path in ipairs(Config.paths.roadTest.riderHit or {}) do
+            loadImage("roadTestRiderHit" .. string.format("%02d", index), path)
+        end
+        loadImage("roadTestRider", Config.paths.roadTest.rider)
+        if Assets.images.roadTestRunnerRoad then
+            Assets.images.roadTestRunnerRoad:setWrap("clamp", "repeat")
+            Assets.images.roadTestRunnerRoad:setFilter("linear", "linear", 4)
+        end
     end
     for key, paths in pairs(Config.paths.motorcycles or {}) do
         loadImage("motorcycleService_" .. key, paths.service)
         loadImage("motorcycleMounted_" .. key, paths.mounted)
+        loadImage("motorcycleRear_" .. key, paths.rear)
     end
 
     local workshop, walkmask = Assets.images.workshop, Assets.data.walkmask

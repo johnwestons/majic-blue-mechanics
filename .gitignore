@@ -23,4 +23,5 @@ __pycache__/
 *.bak
 /.stabilization/*.rpt
 /.stabilization/smoke-watchdog-*.txt
+/.stabilization/rider-hit-raw*/
 /output/

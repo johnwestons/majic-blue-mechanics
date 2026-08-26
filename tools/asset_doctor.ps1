@@ -45,9 +45,42 @@ $expected = [ordered]@{
     'assets\tools\diagnostic-reader-frame-02.png' = @(256, 256)
     'assets\tools\diagnostic-reader-frame-03.png' = @(256, 256)
     'assets\tools\diagnostic-reader-frame-04.png' = @(256, 256)
+    'assets\road-test\parking-lot-option-a.png' = @(1024, 1536)
+    'assets\road-test\industrial-road-segment-01.png' = @(1024, 1536)
+    'assets\road-test\industrial-road-segment-02.png' = @(1024, 1536)
+    'assets\road-test\industrial-road-segment-03.png' = @(1024, 1536)
+    'assets\road-test\warehouse-street-view-01.png' = @(1024, 1536)
+    'assets\road-test\warehouse-street-view-02.png' = @(1024, 1536)
+    'assets\road-test\warehouse-street-view-03.png' = @(1024, 1536)
+    'assets\road-test\warehouse-street-view-04.png' = @(1024, 1536)
+    'assets\road-test\warehouse-street-view-05.png' = @(1024, 1536)
+    'assets\road-test\runner-road-texture.png' = @(1254, 1254)
+    'assets\road-test\runner-sky.png' = @(1024, 1536)
+    'assets\road-test\runner-city-horizon.png' = @(1536, 1024)
+    'assets\road-test\runner-fence-trees.png' = @(1672, 941)
+    'assets\road-test\runner-warehouse-bay.png' = @(1619, 971)
+    'assets\road-test\runner-clutter.png' = @(1536, 1024)
+    'assets\road-test\runner-left-section.png' = @(2135, 736)
+    'assets\road-test\runner-right-section.png' = @(2172, 724)
+    'assets\road-test\runner-left-wall-texture-long.png' = @(2172, 724)
+    'assets\road-test\runner-right-wall-texture-long.png' = @(2172, 724)
+    'assets\road-test\mechanic-raccoon-rider.png' = @(256, 256)
+    'assets\road-test\road-test-cone.png' = @(128, 128)
     'assets\characters\mechanic-raccoon\idle.png' = @(1024, 512)
     'assets\characters\mechanic-raccoon\walk.png' = @(3072, 512)
     'assets\characters\mechanic-raccoon\use.png' = @(1536, 512)
+}
+
+foreach ($graffiti in @('raccoon', 'fox', 'owl', 'snake', 'wrench', 'ride', 'shift', 'majic')) {
+    $expected["assets\road-test\runner-graffiti-$graffiti.png"] = @(1254, 1254)
+}
+
+foreach ($traffic in @('hatchback-teal', 'sedan-orange', 'van-blue', 'pickup-olive')) {
+    $expected["assets\road-test\traffic\traffic-$traffic.png"] = @(256, 256)
+}
+
+foreach ($frame in 1..4) {
+    $expected["assets\road-test\rider-hit\frame-{0:D2}.png" -f $frame] = @(256, 256)
 }
 
 foreach ($bike in @('naked-black', 'vintage-red-standard', 'black-classic',
@@ -56,6 +89,16 @@ foreach ($bike in @('naked-black', 'vintage-red-standard', 'black-classic',
         'modern-gray-cruiser')) {
     $expected["assets\motorcycles\$bike-service.png"] = @(256, 256)
     $expected["assets\motorcycles\$bike-mounted.png"] = @(256, 256)
+    $expected["assets\motorcycles\$bike-rear.png"] = @(256, 256)
+}
+
+foreach ($part in @('oil', 'brake', 'chain', 'stator', 'suspension',
+        'belt', 'spoke', 'carb', 'magneto', 'coolant')) {
+    $expected["assets\repair-parts\$part.png"] = @(128, 128)
+}
+
+foreach ($tool in @('ratchet', 'spanner', 'screwdriver', 'filter-wrench', 'funnel')) {
+    $expected["assets\repair-tools\$tool.png"] = @(128, 128)
 }
 
 foreach ($character in @('business-dragon', 'business-fox', 'business-cat')) {
@@ -76,6 +119,19 @@ foreach ($entry in $expected.GetEnumerator()) {
         $entry.Key -eq 'assets\motorcycles\gsxr-600-service.png' -or
         $entry.Key -like 'assets\motorcycles\*-service.png' -or
         $entry.Key -like 'assets\motorcycles\*-mounted.png' -or
+        $entry.Key -like 'assets\motorcycles\*-rear.png' -or
+        $entry.Key -like 'assets\repair-parts\*.png' -or
+        $entry.Key -like 'assets\repair-tools\*.png' -or
+        $entry.Key -like 'assets\road-test\runner-fence-trees.png' -or
+        $entry.Key -like 'assets\road-test\runner-warehouse-bay.png' -or
+        $entry.Key -like 'assets\road-test\runner-clutter.png' -or
+        $entry.Key -like 'assets\road-test\runner-left-section.png' -or
+        $entry.Key -like 'assets\road-test\runner-right-section.png' -or
+        $entry.Key -like 'assets\road-test\runner-graffiti-*.png' -or
+        $entry.Key -like 'assets\road-test\traffic\*.png' -or
+        $entry.Key -like 'assets\road-test\rider-hit\*.png' -or
+        $entry.Key -like 'assets\road-test\mechanic-raccoon-rider.png' -or
+        $entry.Key -like 'assets\road-test\road-test-cone.png' -or
         $entry.Key -like 'assets\tools\diagnostic-reader-frame-*.png') {
         $alphaPassed = $info.pixelFormat -match 'Alpha|Argb|PArgb'
         Add-Check "alpha:$($entry.Key)" $alphaPassed "pixel format is $($info.pixelFormat)"

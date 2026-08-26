@@ -1,4 +1,5 @@
 local Jobs = require("src.jobs")
+local Procurement = require("src.procurement")
 
 local JobService = {}
 
@@ -48,7 +49,7 @@ end
 
 function JobService.currentJob(state)
     for _, job in ipairs(state.jobs.active) do
-        if Jobs.isActive(job) then
+        if Jobs.isActive(job) and job.stage ~= "awaiting_dropoff" then
             Jobs.ensureBikeSprite(job)
             return job
         end
@@ -73,13 +74,12 @@ end
 function JobService.repair(state, id)
     local job = JobService.findActive(state, id)
     if not job then return false, "That work order is not active." end
-    if state.money < job.partsCost then
-        return false, string.format("Need $%d for parts; the shop has $%d.", job.partsCost, state.money)
+    if Procurement.quantity(state, job.repairKind) < 1 then
+        return false, "Required parts are not in stock. Order the matching service kit at the computer."
     end
     local ok, message = Jobs.repair(job)
     if ok then
-        state.money = state.money - job.partsCost
-        state.expenses = state.expenses + job.partsCost
+        Procurement.consume(state, job.repairKind)
         state.message = job.id .. ": repair complete. Run the final road test."
         return true, job
     end
@@ -87,9 +87,31 @@ function JobService.repair(state, id)
 end
 
 function JobService.roadTest(state, id)
-    local job, index = JobService.findActive(state, id)
+    local job = JobService.findActive(state, id)
     if not job then return false, "That work order is not active." end
     local ok, message = Jobs.completeTest(job)
+    if not ok then return false, message end
+    state.selectedJobId = nil
+    state.message = job.transportRequired
+        and (job.id .. " passed its road test. The return flatbed has been requested.")
+        or (job.id .. " passed its road test. The owner is on the way for pickup.")
+    return true, job
+end
+
+
+function JobService.receiveDropoff(state, id)
+    local job = JobService.findActive(state, id)
+    if not job then return false, "That transported motorcycle is not active." end
+    local ok, message = Jobs.receiveDropoff(job)
+    if not ok then return false, message end
+    state.message = job.id .. " unloaded into the service bay. Diagnosis can begin."
+    return true, job
+end
+
+function JobService.completePickup(state, id)
+    local job, index = JobService.findActive(state, id)
+    if not job then return false, "That motorcycle is not awaiting pickup." end
+    local ok, message = Jobs.completePickup(job)
     if not ok then return false, message end
     table.remove(state.jobs.active, index)
     state.jobs.completed[#state.jobs.completed + 1] = job
@@ -97,8 +119,19 @@ function JobService.roadTest(state, id)
     state.revenue = state.revenue + job.quote
     state.reputation = state.reputation + 2
     state.selectedJobId = nil
-    state.message = string.format("%s delivered. Collected $%d.", job.id, job.quote)
+    state.message = string.format("%s returned to %s. Collected $%d.",
+        job.id, job.owner, job.quote)
     return true, job
+end
+
+function JobService.updateOwnerPickups(state, dt, delay)
+    for _, job in ipairs(state.jobs.active) do
+        if job.stage == "ready_for_pickup" and not job.transportRequired then
+            job.pickupTimer = (tonumber(job.pickupTimer) or 0) + math.max(0, dt or 0)
+            if job.pickupTimer >= delay then return JobService.completePickup(state, job.id) end
+        end
+    end
+    return false
 end
 
 return JobService

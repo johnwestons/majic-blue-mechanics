@@ -2,8 +2,11 @@ local Config = require("src.config")
 local Customer = require("src.customer")
 local Interaction = require("src.interaction")
 local JobService = require("src.job_service")
-local Jobs = require("src.jobs")
 local Navigation = require("src.navigation")
+local DeliveryVehicle = require("src.delivery_vehicle")
+local Procurement = require("src.procurement")
+local MotorcycleTransport = require("src.motorcycle_transport")
+local WorldRenderer = require("src.world_renderer")
 
 local World = {
     player = {
@@ -32,6 +35,10 @@ local function movementObstacles(state)
             halfHeight = Config.serviceBay.collisionHalfHeight,
         }
     end
+    local vanObstacle = DeliveryVehicle.obstacle(state, Config.partsDelivery)
+    if vanObstacle then obstacles[#obstacles + 1] = vanObstacle end
+    local transportObstacle = MotorcycleTransport.obstacle(state, Config.motorcycleTransport)
+    if transportObstacle then obstacles[#obstacles + 1] = transportObstacle end
     return obstacles
 end
 
@@ -47,6 +54,10 @@ local function targets(state)
     }
     local customer = World.customer:getInteraction()
     if customer then result[#result + 1] = customer end
+    local delivery = DeliveryVehicle.interaction(state, Config.partsDelivery)
+    if delivery then result[#result + 1] = delivery end
+    local transport = MotorcycleTransport.interaction(state, Config.motorcycleTransport)
+    if transport then result[#result + 1] = transport end
     local job = currentJob(state)
     if job then
         result[#result + 1] = {
@@ -61,14 +72,15 @@ local function targets(state)
     return result
 end
 
-function World.load(playerPayload)
+function World.load(playerPayload, customerPayload)
     World.player.x = playerPayload and playerPayload.x or Config.player.spawnX
     World.player.y = playerPayload and playerPayload.y or Config.player.spawnY
     World.player.facing = playerPayload and playerPayload.facing or 1
     World.player.moving = false
     World.player.animationClock = 0
     World.selectedInteraction = nil
-    World.customer:reset(Config.customer.arrivalDelay)
+    World.customer:reset(nil, true)
+    if customerPayload then World.customer:restore(customerPayload) end
 end
 
 function World.snapshot()
@@ -76,6 +88,34 @@ function World.snapshot()
 end
 
 function World.update(dt, directionX, directionY, assets, state)
+    Procurement.ensure(state)
+    DeliveryVehicle.schedule(state, state.procurement, Config.partsDelivery)
+    local deliveryEvent = DeliveryVehicle.update(state, dt, Config.partsDelivery)
+    if deliveryEvent == "parked" then
+        state.message = "The Majic Blue parts van has arrived. Open it at the rear doors."
+    elseif deliveryEvent == "departed" then
+        state.message = "The parts van has left the workshop."
+    end
+    local transport = MotorcycleTransport.ensure(state)
+    if transport.state == "absent" then
+        for _, job in ipairs(state.jobs.active or {}) do
+            if job.transportRequired and (job.stage == "awaiting_dropoff"
+                or job.stage == "pickup_transport") then
+                MotorcycleTransport.schedule(state, job,
+                    job.stage == "awaiting_dropoff" and "inbound" or "outbound",
+                    Config.motorcycleTransport)
+                break
+            end
+        end
+    end
+    local transportEvent = MotorcycleTransport.update(state, dt, Config.motorcycleTransport)
+    if transportEvent == "parked" then
+        state.message = transport.mode == "inbound"
+            and "The motorcycle flatbed is ready to unload."
+            or "The return flatbed is ready to load the finished motorcycle."
+    end
+    local ownerPickupCompleted = JobService.updateOwnerPickups(state, dt,
+        Config.motorcycleTransport.ownerPickupDelay)
     local player = World.player
     player.animationClock = player.animationClock + math.max(0, dt or 0)
     local length = math.sqrt(directionX * directionX + directionY * directionY)
@@ -99,11 +139,11 @@ function World.update(dt, directionX, directionY, assets, state)
         state.pendingOffer = nil
         state.message = "The rider left after waiting too long."
     elseif event == "exited" then
-        World.customer:reset(Config.customer.betweenCustomersDelay)
+        World.customer:reset()
     end
     World.selectedInteraction = Interaction.nearest(player, targets(state))
     state.player = World.snapshot()
-    return event
+    return event, ownerPickupCompleted == true
 end
 
 function World.interact(state)
@@ -124,6 +164,26 @@ function World.interact(state)
         state.selectedJobId = selected.jobId
         state.screen = "service"
         return true
+    elseif selected.kind == "parts_van" then
+        local delivery = DeliveryVehicle.ensure(state)
+        if delivery.state == "parked_closed" then
+            return DeliveryVehicle.toggleDoor(state)
+        elseif delivery.state == "cargo_open" then
+            state.screen = "delivery_manifest"
+            return true
+        end
+    elseif selected.kind == "motorcycle_transport" then
+        local transport = MotorcycleTransport.ensure(state)
+        local ok, result
+        if transport.mode == "inbound" then
+            ok, result = JobService.receiveDropoff(state, transport.jobId)
+        else
+            ok, result = JobService.completePickup(state, transport.jobId)
+        end
+        if not ok then state.message = tostring(result); return false end
+        transport.loaded = transport.mode == "outbound"
+        MotorcycleTransport.depart(state)
+        return true, true
     end
     return false
 end
@@ -142,71 +202,15 @@ end
 
 function World.currentJob(state) return currentJob(state) end
 
-local function drawBackground(assets)
-    local background = assets.get("workshop")
-    if background then
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(background, 0, 0, 0,
-            Config.baseWidth / background:getWidth(),
-            Config.baseHeight / background:getHeight())
-    else
-        love.graphics.setColor(0.22, 0.24, 0.23)
-        love.graphics.rectangle("fill", 0, 0, Config.baseWidth, Config.baseHeight)
-    end
-end
+function World.customerSnapshot() return World.customer:snapshot() end
 
-local function drawServiceLift(job)
-    local x, y = Config.serviceBay.bikeX, Config.serviceBay.bikeY
-    if job then
-        love.graphics.setColor(0.05, 0.07, 0.08, 0.92)
-        love.graphics.rectangle("fill", x - 62, y + 42, 124, 24, 3, 3)
-        love.graphics.setColor(0.91, 0.83, 0.57)
-        love.graphics.printf(job.id .. "  " .. Jobs.stageLabel(job), x - 58, y + 48, 116, "center")
-    end
-end
-
-local function drawMotorcycle(assets, job)
-    local bikeKey = Jobs.ensureBikeSprite(job)
-    local image = bikeKey and assets.get("motorcycleMounted_" .. bikeKey)
-    image = image or assets.get("motorcycleSide")
-    if not image or not job then return end
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(image, Config.serviceBay.bikeX, Config.serviceBay.bikeY + 8, 0,
-        Config.serviceBay.bikeScale, Config.serviceBay.bikeScale,
-        image:getWidth() / 2, image:getHeight() * 0.80)
-end
-
-local function drawPlayer(characterAssets)
-    local player = World.player
-    local action = player.moving and "walk" or "idle"
-    if not characterAssets.draw(Config.player.character, action, player.x, player.y,
-        Config.player.maxWidth, Config.player.maxHeight, player.facing,
-        player.animationClock, action == "walk" and 5.2 or 0.7)
-    then
-        love.graphics.setColor(0.46, 0.38, 0.31)
-        love.graphics.rectangle("fill", player.x - 12, player.y - 48, 24, 48)
-    end
+function World.closePartsVan(state)
+    if #Procurement.manifest(state) > 0 then return false end
+    return DeliveryVehicle.toggleDoor(state)
 end
 
 function World.draw(assets, characterAssets, state)
-    drawBackground(assets)
-    local job = currentJob(state)
-    drawServiceLift(job)
-
-    local activeCharacters = { [Config.player.character] = true }
-    if World.customer.visible then activeCharacters[World.customer.character] = true end
-    characterAssets.retainCharacters(activeCharacters)
-
-    local actors = {
-        { y = Config.serviceBay.bikeY, draw = function() drawMotorcycle(assets, job) end },
-        { y = World.player.y, draw = function() drawPlayer(characterAssets) end },
-    }
-    if World.customer.visible then
-        actors[#actors + 1] = { y = World.customer.y,
-            draw = function() World.customer:draw(characterAssets) end }
-    end
-    table.sort(actors, function(a, b) return a.y < b.y end)
-    for _, actor in ipairs(actors) do actor.draw() end
+    return WorldRenderer.draw(World, assets, characterAssets, state)
 end
 
 return World

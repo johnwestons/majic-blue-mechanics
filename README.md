@@ -13,7 +13,11 @@ A playable LÖVE 2D vertical slice for an isometric motorcycle-mechanic shop gam
 7. Collect payment, build reputation, and take the next customer.
 
 Motorcycles with charging, vintage ignition, or major suspension problems arrive on the Majic Blue
-recovery flatbed instead of appearing directly on the lift. Unload them at the roll-up-door apron before
+recovery flatbed instead of appearing directly on the lift. The empty flatbed is a regenerated Picture
+Shop-style truck sprite; each job's motorcycle remains a separate sprite that is loaded onto its wood
+deck at runtime. The truck waits for the shared loading bay, backs through the same doorway aperture as
+the parts-delivery truck, and keeps the roll-up door open until it pulls away. Unload inbound bikes at
+the roll-up-door apron before
 diagnosis. After a successful road test, ride-in owners return after a short handoff delay; transported
 bikes wait for the return flatbed. Jobs are paid and archived only when the motorcycle leaves the shop.
 
@@ -63,6 +67,14 @@ high-resolution generated and alpha-cleaned sources retained under
 
 The launcher finds LÖVE on `PATH`, in a local `runtime` folder, or in the normal Program Files locations. Launch the whole project folder, not `main.lua` by itself.
 
+## Run on Android
+
+Connect one authorized Android phone with USB debugging enabled, then run `./BUILD_ANDROID.ps1 -Install`
+from PowerShell. The command packages the shared game, runs its mobile smoke check, builds and verifies
+the debug APK, installs it, and confirms startup. Use `-PackageOnly` when you only need to validate the
+portable `.love` package, or omit `-Install` to build the APK without changing a phone. See
+`ANDROID_PORT.md` for the device checklist and output paths.
+
 ## Controls
 
 - Move: **WASD** or arrow keys
@@ -71,6 +83,7 @@ The launcher finds LÖVE on `PATH`, in a local `runtime` folder, or in the norma
 - Service bay: **D** diagnose, **R** repair, **T** road test
 - Repair bench: drag with the mouse; hold and move the active tool; **1–5** select tools; arrows operate; Enter confirms
 - Road test: **W/Up** accelerate, hold **Shift** for maximum speed, **S/Down** brake, **A/D** or **Left/Right** steer
+- View camera: mouse wheel zooms around the cursor; hold the middle mouse button and drag to pan
 - Close a screen / return to title: **Escape**
 - Title: **N** new, **C** continue, **D** delete, **Q** quit
 
@@ -84,6 +97,15 @@ Mouse buttons are available for estimate, service, and close actions. On the tit
 - Service bay: **X** starts diagnosis, **Y** starts repair, and right shoulder starts the road test.
 - Road test: left stick/D-pad steers, right trigger or **A** accelerates, left trigger or **X** brakes,
   right shoulder enables maximum speed, **A** approves at review, **X** retries, and **B** cancels.
+
+### Phone
+
+- Shop floor: use the left virtual stick to walk and the contextual **USE** button to interact.
+- Menus and hands-on repair screens: tap, drag, rotate, hold, and release directly on the controls.
+- Every scene and GUI supports two-finger pinch zoom and two-finger pan. Each view remembers its own
+  zoom and position; virtual controls remain fixed at the phone edges.
+- Road test: steer with the stick and hold the separate throttle, brake, and boost buttons together as needed.
+- Android Back closes the current panel; leaving the app releases held controls and saves progress.
 
 The office computer now separates active work orders, completed service history, customer/motorcycle
 records, parts inventory, and shop finances. Click a work order for the full complaint, service, parts,
@@ -106,14 +128,16 @@ intervals, rotate through the three lounge seats, and wait up to five minutes be
 
 ## Validation
 
-- `RUN_SMOKE_TEST.bat` runs deterministic work-order, economy, navigation, asset, customer-route, and three-frame render checks.
-- `RUN_VISUAL_TESTS.bat` captures and validates the 14-scene title, workshop, UI, repair, road-test,
-  delivery-van, manifest, and motorcycle-flatbed visual matrix under `output/visual-regression/`.
+- `RUN_SMOKE_TEST.bat` runs deterministic work-order, economy, navigation, camera/gesture, asset, customer-route, and three-frame render checks.
+- `RUN_SPRITE_DOCTOR.bat -AuditOnly` audits every character strip, writes contact sheets/GIFs, and checks the generated runtime catalog. Run it without `-AuditOnly` to open the Sprite Motion Lab; `-Character mechanic-raccoon -Action use` opens a specific animation.
+- `RUN_VISUAL_TESTS.bat` captures and validates a 17-scene matrix under `output/visual-regression/`, including the Sprite Motion Lab, road-test driving and finish states, and a 1170×540 phone-layout capture in addition to title, workshop, UI, repair, delivery, manifest, and flatbed scenes.
 - `tools/asset_doctor.ps1` validates required dimensions, alpha-capable character sheets, workshop/mask alignment, and a strict black/white walkmask.
+- `BUILD_ANDROID.ps1 -PackageOnly` builds and smoke-tests the shared mobile package; `BUILD_ANDROID.ps1 -Install` builds, installs, and verifies the debug APK on one connected phone.
 - `tools/normalize_transparent_sprite.ps1` crops a generated transparent motorcycle to the project's square sprite contract without adding a floor shadow.
 - The same normalizer promotes generated repair-part and repair-tool art to the 128×128 transparent UI-sprite contract.
 - `tools/remove_checkerboard_background.ps1` removes generated checkerboard preview pixels before normalization.
 - `tools/split_alpha_sprite_strip.ps1` splits the four-frame diagnostic-reader render into the runtime's 256×256 animation frames.
 
 See `docs/coding_conventions.md`, `docs/source_control.md`, and `docs/asset_provenance.md` for the inherited project rules and exact sister-project sources.
-See `docs/testing.md` for the complete gameplay, visual, and asset verification workflow.
+See `docs/SPRITE_WORKFLOW.md` for importing and repairing animation strips, and `docs/testing.md` for the complete gameplay, visual, asset, and phone verification workflow.
+On Windows, launch `RUN_GAME.vbs` to start the game without opening a command window. `RUN_GAME.bat` remains available for troubleshooting and shows any startup errors.

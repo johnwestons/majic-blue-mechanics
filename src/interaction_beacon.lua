@@ -5,6 +5,7 @@ InteractionBeacon.VERSION = 1
 local DEFAULT_PALETTE = {
     deep = { 0.035, 0.24, 0.31 },
     base = { 0.36, 0.92, 0.95 },
+    ringScale = { 0.72, 0.85, 0.92 },
     highlight = { 0.80, 1.00, 1.00 },
     outline = { 0.015, 0.075, 0.095 },
 }
@@ -145,22 +146,19 @@ function InteractionBeacon.drawUnderlay(selected, clock, options)
     local reducedMotion = options.reducedMotion == true
     local highContrast = options.highContrast == true
     local hovered = selected.hovered == true
-    local pulse = reducedMotion and 0 or math.sin((clock or 0) * 4.2) * 0.8
+    local pulse = reducedMotion and 0.5 or 0.5 + 0.5 * math.sin((clock or 0) * 6)
     local activation = activationAmount(target, reducedMotion)
     local scale = 0.90 + close * 0.10 + (hovered and 0.08 or 0) + activation * 0.10
     local radius = (target.beaconRadius or 17) * scale + pulse
-    local x = snap(target.x + (target.beaconOffsetX or 0), options)
-    local y = snap(target.y + (target.beaconGroundOffset or 8), options)
+    local x = target.x + (target.beaconOffsetX or 0)
+    local y = target.y + (target.beaconOffsetY or 0)
     local oldWidth = love.graphics.getLineWidth()
+    local ringScale = palette.ringScale or { 0.72, 0.85, 0.92 }
 
-    love.graphics.setColor(palette.outline[1], palette.outline[2], palette.outline[3], highContrast and 0.90 or 0.22)
-    love.graphics.setLineWidth(highContrast and 4 or 2)
-    love.graphics.ellipse("line", x, y + 1, radius + 1.5, radius * 0.43 + 1)
-    love.graphics.setColor(color[1], color[2], color[3], 0.08 + close * 0.10)
-    love.graphics.ellipse("fill", x, y, radius, radius * 0.43)
-    love.graphics.setColor(color[1], color[2], color[3], 0.50 + close * 0.28)
-    love.graphics.setLineWidth(highContrast and 2.5 or 1.5)
-    love.graphics.ellipse("line", x, y, radius, radius * 0.43)
+    love.graphics.setLineWidth(highContrast and 3 or 2)
+    love.graphics.setColor(color[1] * ringScale[1], color[2] * ringScale[2], color[3] * ringScale[3],
+        0.30 + pulse * 0.22)
+    love.graphics.ellipse("line", x, y + 2, 13 + pulse * 2, 7 + pulse)
     love.graphics.setLineWidth(oldWidth)
     love.graphics.setColor(1, 1, 1, 1)
 end
@@ -171,20 +169,17 @@ function InteractionBeacon.drawOverlay(selected, clock, options)
         return
     end
     local target = targetOf(selected)
-    local color, close, palette = InteractionBeacon.colorFor(selected, options)
+    local color = InteractionBeacon.colorFor(selected, options)
     local reducedMotion = options.reducedMotion == true
-    local highContrast = options.highContrast == true
-    local hovered = selected.hovered == true
-    local bob = reducedMotion and 0 or math.sin((clock or 0) * 3.8) * (1.2 + close * 0.8)
-    local activation = activationAmount(target, reducedMotion)
-    local size = (target.beaconSize or 6) * (0.92 + close * 0.08 + (hovered and 0.12 or 0) + activation * 0.18)
-    local x = snap(target.x + (target.beaconOffsetX or 0), options)
-    local y = snap(target.y - (target.beaconHeight or 29) + bob, options)
-    local oldWidth = love.graphics.getLineWidth()
+    local pulse = reducedMotion and 0.5 or 0.5 + 0.5 * math.sin((clock or 0) * 6)
+    local x = target.x + (target.beaconOffsetX or 0)
+    local y = target.y + (target.beaconOffsetY or 0)
 
-    drawGem(x, y, size, size * 1.45, color, palette,
-        0.82 + close * 0.18, highContrast, activation)
-    love.graphics.setLineWidth(oldWidth)
+    love.graphics.setColor(color[1], color[2], color[3], 0.70 + pulse * 0.20)
+    love.graphics.polygon("fill", x, y - 19 - pulse * 2,
+        x - 4, y - 13 - pulse * 2,
+        x, y - 9 - pulse * 2,
+        x + 4, y - 13 - pulse * 2)
     love.graphics.setColor(1, 1, 1, 1)
 end
 

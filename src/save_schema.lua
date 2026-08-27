@@ -67,6 +67,14 @@ function Schema.reconcile(payload)
         or { orders = {}, nextOrderId = 1 }
     payload.procurement.orders = type(payload.procurement.orders) == "table"
         and payload.procurement.orders or {}
+    payload.procurement.cart = type(payload.procurement.cart) == "table"
+        and payload.procurement.cart or {}
+    for kind, quantity in pairs(payload.procurement.cart) do
+        if not Catalog.get(kind) or type(quantity) ~= "number" or quantity < 1
+            or quantity ~= math.floor(quantity) then
+            return false
+        end
+    end
     payload.procurement.nextOrderId = math.max(1,
         math.floor(tonumber(payload.procurement.nextOrderId) or 1))
     local orderIds = {}
@@ -105,7 +113,7 @@ function Schema.reconcile(payload)
         or { state = "absent", mode = nil, jobId = nil, timer = 0, progress = 0,
             loaded = false }
     local transportStates = { absent = true, scheduled = true, arriving = true,
-        parked = true, departing = true }
+        waiting_for_bay = true, backing = true, parked = true, departing = true }
     if not transportStates[payload.motorcycleTransport.state] then return false end
     if payload.motorcycleTransport.mode ~= nil
         and payload.motorcycleTransport.mode ~= "inbound"
@@ -115,6 +123,13 @@ function Schema.reconcile(payload)
     payload.motorcycleTransport.progress = math.max(0,
         math.min(1, tonumber(payload.motorcycleTransport.progress) or 0))
     payload.motorcycleTransport.loaded = payload.motorcycleTransport.loaded == true
+    payload.calendar = type(payload.calendar) == "table" and payload.calendar
+        or { year = 2026, month = 1, day = 1, weekday = 4, elapsed = 0, totalDays = 0 }
+    payload.clientEmails = type(payload.clientEmails) == "table" and payload.clientEmails
+        or { inbox = {}, archive = {}, nextId = 1 }
+    payload.clientEmails.inbox = type(payload.clientEmails.inbox) == "table" and payload.clientEmails.inbox or {}
+    payload.clientEmails.archive = type(payload.clientEmails.archive) == "table" and payload.clientEmails.archive or {}
+    payload.clientEmails.nextId = math.max(1, math.floor(tonumber(payload.clientEmails.nextId) or 1))
     return true
 end
 

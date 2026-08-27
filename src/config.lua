@@ -14,14 +14,8 @@ local Config = {
         -- Match Picture Shop's visible-frame normalization. Every action is
         -- measured against the same source height before fitting the shop.
         referenceHeight = 256,
-        -- Source walk cells 3 and 4 have clipped head/goggle artwork. As with
-        -- Picture Shop's approved walk cycles, animate only clean poses.
-        frameSequences = {
-            ["mechanic-raccoon"] = {
-                walk = { 1, 2, 5, 6, 5, 2 },
-            },
-        },
     },
+    businessCalendar = { secondsPerDay = 300 },
     customer = {
         characterPool = { "business-dragon", "business-fox", "business-cat" },
         maxWidth = 132,
@@ -87,12 +81,29 @@ local Config = {
     },
     motorcycleTransport = {
         scheduleDelay = 2.5,
-        travelDuration = 2.4,
+        backingDuration = 2.2,
         ownerPickupDelay = 3.5,
-        start = { x = -180, y = 230, scale = 0.82 },
-        parked = { x = 185, y = 230, scale = 0.82 },
-        interaction = { x = 340, y = 285, radius = 82 },
-        obstacle = { halfWidth = 118, halfHeight = 36 },
+        frameWidth = 1402,
+        frameHeight = 1122,
+        -- The flatbed is intentionally 20% smaller than its original dock
+        -- presentation.  Moving the anchor right keeps its deck aligned with
+        -- the loading-bay threshold after scaling around the truck's center.
+        start = { x = -117, y = 210, scale = 0.272 },
+        parked = { x = 87, y = 296, scale = 0.272 },
+        -- Transport bikes sit toward the exposed rear half of the deck, not
+        -- up against the cab hidden behind the doorway.
+        bikeOffsetX = 280,
+        bikeOffsetY = -60,
+        -- These source-space bounds compensate for the smaller parent truck,
+        -- yielding a motorcycle that is 40% larger on screen than before.
+        bikeMaxWidth = 613,
+        bikeMaxHeight = 429,
+        interaction = { x = 218, y = 270, radius = 68 },
+        obstacle = { offsetX = 0, offsetY = -8, radius = 78 },
+        aperture = {
+            { x = 138, y = 149 }, { x = 270, y = 124 },
+            { x = 270, y = 247 }, { x = 138, y = 273 },
+        },
     },
     serviceBay = {
         bikeX = 300,
@@ -175,6 +186,7 @@ local Config = {
         workshop = "assets/workshop/workshop-layout-v2.png",
         walkmask = "assets/workshop/workshop-walkmask.png",
         deliveryTruck = "assets/delivery/delivery-truck-open.png",
+        motorcycleFlatbed = "assets/delivery/motorcycle-flatbed-empty.png",
         truckCargoDoor = "assets/delivery/truck-cargo-door-strip.png",
         loadingBayDoor = "assets/delivery/loading-bay-door-strip.png",
         motorcycleSide = "assets/motorcycles/gsxr-600-service.png",
@@ -209,51 +221,61 @@ local Config = {
             nakedBlack = {
                 service = "assets/motorcycles/naked-black-service.png",
                 mounted = "assets/motorcycles/naked-black-mounted.png",
+                transport = "assets/motorcycles/naked-black-transport.png",
                 rear = "assets/motorcycles/naked-black-rear.png",
             },
             vintageRedStandard = {
                 service = "assets/motorcycles/vintage-red-standard-service.png",
                 mounted = "assets/motorcycles/vintage-red-standard-mounted.png",
+                transport = "assets/motorcycles/vintage-red-standard-transport.png",
                 rear = "assets/motorcycles/vintage-red-standard-rear.png",
             },
             blackClassic = {
                 service = "assets/motorcycles/black-classic-service.png",
                 mounted = "assets/motorcycles/black-classic-mounted.png",
+                transport = "assets/motorcycles/black-classic-transport.png",
                 rear = "assets/motorcycles/black-classic-rear.png",
             },
             redSupersport = {
                 service = "assets/motorcycles/red-supersport-service.png",
                 mounted = "assets/motorcycles/red-supersport-mounted.png",
+                transport = "assets/motorcycles/red-supersport-transport.png",
                 rear = "assets/motorcycles/red-supersport-rear.png",
             },
             adventureSilverRed = {
                 service = "assets/motorcycles/adventure-silver-red-service.png",
                 mounted = "assets/motorcycles/adventure-silver-red-mounted.png",
+                transport = "assets/motorcycles/adventure-silver-red-transport.png",
                 rear = "assets/motorcycles/adventure-silver-red-rear.png",
             },
             redVtwinCruiser = {
                 service = "assets/motorcycles/red-vtwin-cruiser-service.png",
                 mounted = "assets/motorcycles/red-vtwin-cruiser-mounted.png",
+                transport = "assets/motorcycles/red-vtwin-cruiser-transport.png",
                 rear = "assets/motorcycles/red-vtwin-cruiser-rear.png",
             },
             adventureBlueWhite = {
                 service = "assets/motorcycles/adventure-blue-white-service.png",
                 mounted = "assets/motorcycles/adventure-blue-white-mounted.png",
+                transport = "assets/motorcycles/adventure-blue-white-transport.png",
                 rear = "assets/motorcycles/adventure-blue-white-rear.png",
             },
             uralTanClassic = {
                 service = "assets/motorcycles/ural-tan-classic-service.png",
                 mounted = "assets/motorcycles/ural-tan-classic-mounted.png",
+                transport = "assets/motorcycles/ural-tan-classic-transport.png",
                 rear = "assets/motorcycles/ural-tan-classic-rear.png",
             },
             bmwR24Vintage = {
                 service = "assets/motorcycles/bmw-r24-vintage-service.png",
                 mounted = "assets/motorcycles/bmw-r24-vintage-mounted.png",
+                transport = "assets/motorcycles/bmw-r24-vintage-transport.png",
                 rear = "assets/motorcycles/bmw-r24-vintage-rear.png",
             },
             modernGrayCruiser = {
                 service = "assets/motorcycles/modern-gray-cruiser-service.png",
                 mounted = "assets/motorcycles/modern-gray-cruiser-mounted.png",
+                transport = "assets/motorcycles/modern-gray-cruiser-transport.png",
                 rear = "assets/motorcycles/modern-gray-cruiser-rear.png",
             },
         },

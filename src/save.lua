@@ -85,6 +85,8 @@ local function persistentPayload(slot, state, worldSnapshot, customerSnapshot)
         procurement = state.procurement,
         delivery = state.delivery,
         motorcycleTransport = state.motorcycleTransport,
+        calendar = state.calendar,
+        clientEmails = state.clientEmails,
     }
 end
 

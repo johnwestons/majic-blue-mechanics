@@ -3,17 +3,24 @@ local Catalog = require("src.parts_catalog")
 local Procurement = require("src.procurement")
 local BackButton = require("src.screens.back_button")
 local Ui = require("src.screens.ui")
+local Calendar = require("src.business_calendar")
+local ClientEmail = require("src.client_email")
 
-local ComputerScreen = { tab = "active", selectedJobId = nil, cursorRow = 1 }
+local ComputerScreen = { tab = "active", selectedJobId = nil, cursorRow = 1, cartOpen = false }
 local CLOSE = { x = 684, y = 552, width = 134, height = 38 }
 local DETAIL_BACK = { x = 128, y = 552, width = 134, height = 38 }
+local PARTS_CART = { x = 672, y = 198, width = 146, height = 32 }
+local CART_BACK = { x = 128, y = 514, width = 150, height = 32 }
+local CART_BUY = { x = 484, y = 514, width = 170, height = 32 }
 local LIST = { x = 128, y = 235, width = 690, rowHeight = 54, visibleRows = 5 }
 local tabs = {
-    { id = "active", label = "ACTIVE", x = 128, width = 126 },
-    { id = "completed", label = "HISTORY", x = 264, width = 126 },
-    { id = "parts", label = "PARTS", x = 400, width = 126 },
-    { id = "customers", label = "CUSTOMERS", x = 536, width = 126 },
-    { id = "finances", label = "SHOP", x = 672, width = 126 },
+    { id = "active", label = "ACTIVE", x = 128, width = 100 },
+    { id = "completed", label = "HISTORY", x = 236, width = 100 },
+    { id = "parts", label = "PARTS", x = 344, width = 100 },
+    { id = "customers", label = "CLIENTS", x = 452, width = 100 },
+    { id = "calendar", label = "CALENDAR", x = 560, width = 100 },
+    { id = "email", label = "EMAIL", x = 668, width = 100 },
+    { id = "finances", label = "SHOP", x = 776, width = 90 },
 }
 
 local function contains(rect, x, y)
@@ -65,18 +72,26 @@ end
 
 function ComputerScreen.enter()
     ComputerScreen.tab, ComputerScreen.selectedJobId, ComputerScreen.cursorRow = "active", nil, 1
+    ComputerScreen.cartOpen = false
 end
 
 local function drawTabs(mouseX, mouseY)
     for index, tab in ipairs(tabs) do
         local selected = ComputerScreen.tab == tab.id
         local hovered = Ui.contains(tab.x, 154, tab.width, 36, mouseX, mouseY)
-        love.graphics.setColor(selected and 0.15 or 0.06, selected and 0.38 or 0.18,
-            selected and 0.44 or 0.22, hovered and 1 or 0.94)
-        love.graphics.rectangle("fill", tab.x, 154, tab.width, 36, 4, 4)
+        local mouseDown = love.mouse and love.mouse.isDown and love.mouse.isDown(1)
+        local pressed = hovered and (mouseDown or Ui.pointerIsDown())
+        local offset = pressed and 2 or 0
+        love.graphics.setColor(selected and (pressed and 0.11 or 0.15) or (hovered and 0.12 or 0.06),
+            selected and (pressed and 0.30 or 0.38) or (hovered and 0.30 or 0.18),
+            selected and (pressed and 0.35 or 0.44) or (hovered and 0.34 or 0.22),
+            hovered and 1 or 0.94)
+        love.graphics.rectangle("fill", tab.x, 154 + offset, tab.width, 36 - offset, 4, 4)
         love.graphics.setColor(selected and 0.58 or 0.24, selected and 0.88 or 0.52,
             selected and 0.86 or 0.57)
-        love.graphics.rectangle("line", tab.x, 154, tab.width, 36, 4, 4)
+        love.graphics.setLineWidth(pressed and 2 or 1)
+        love.graphics.rectangle("line", tab.x, 154 + offset, tab.width, 36 - offset, 4, 4)
+        love.graphics.setLineWidth(1)
         Ui.label(index .. "  " .. tab.label, tab.x, 165, tab.width,
             selected and { 0.96, 0.92, 0.72 } or { 0.69, 0.78, 0.75 }, "center")
     end
@@ -158,6 +173,35 @@ local function drawFinances(state)
         190, 460, 580, { 0.50, 0.59, 0.58 }, "center")
 end
 
+local function drawCalendar(state)
+    Calendar.ensure(state)
+    Ui.label("SHOP CALENDAR", LIST.x, 205, LIST.width, { 0.90, 0.84, 0.57 })
+    Ui.label(Calendar.dateText(state) .. "  •  Week " .. Calendar.weekNumber(state), LIST.x, 235, LIST.width, { 0.58, 0.90, 0.92 })
+    local events = Calendar.events(state)
+    if #events == 0 then Ui.label("No service, delivery, or pickup dates are scheduled yet.", LIST.x, 300, LIST.width, { 0.56, 0.64, 0.62 }, "center") end
+    for index = 1, math.min(#events, 6) do
+        local event, rect = events[index], rowRect(index)
+        love.graphics.setColor(0.05, 0.13, 0.16, 0.94); love.graphics.rectangle("fill", rect.x, rect.y, rect.width, rect.height, 3, 3)
+        Ui.label("DAY " .. tostring(event.day + 1) .. "  " .. event.title, rect.x + 12, rect.y + 7, 500, { 0.82, 0.88, 0.84 })
+        Ui.label(event.detail or "", rect.x + 12, rect.y + 27, 640, { 0.58, 0.72, 0.72 })
+    end
+    Ui.label("The calendar tracks motorcycle service, parts deliveries, and customer pickups.", LIST.x, 526, LIST.width, { 0.90, 0.76, 0.36 }, "center")
+end
+
+local function drawEmail(state)
+    local inbox = ClientEmail.inbox(state)
+    Ui.label("CUSTOMER EMAIL", LIST.x, 205, LIST.width, { 0.90, 0.84, 0.57 })
+    if #inbox == 0 then Ui.label("No new customer messages.", LIST.x, 280, LIST.width, { 0.56, 0.64, 0.62 }, "center") end
+    for index, mail in ipairs(inbox) do
+        if index > LIST.visibleRows then break end
+        local rect = rowRect(index)
+        love.graphics.setColor(0.05, 0.13, 0.16, 0.94); love.graphics.rectangle("fill", rect.x, rect.y, rect.width, rect.height, 3, 3)
+        Ui.label(mail.sender .. "  •  " .. mail.jobId, rect.x + 12, rect.y + 7, 640, { 0.82, 0.88, 0.84 })
+        Ui.label(mail.subject, rect.x + 12, rect.y + 27, 640, { 0.58, 0.90, 0.92 })
+    end
+    Ui.label("Click a message to archive it after reading.", LIST.x, 526, LIST.width, { 0.90, 0.76, 0.36 }, "center")
+end
+
 local function partRect(index)
     local column = (index - 1) % 2
     local row = math.floor((index - 1) / 2)
@@ -169,10 +213,58 @@ local function partBuyRect(index)
     return { x = rect.x + 252, y = rect.y + 9, width = 76, height = 32 }
 end
 
+local function cartAdjustRect(index, direction)
+    local rect = partRect(index)
+    return { x = rect.x + (direction == "remove" and 168 or 272), y = rect.y + 9,
+        width = direction == "remove" and 64 or 28, height = 32 }
+end
+
+local function drawCart(state, mouseX, mouseY)
+    local items = Procurement.cartItems(state)
+    local total = Procurement.cartTotal(state)
+    Ui.label("CHECKOUT CART", LIST.x, 205, 460, { 0.90, 0.84, 0.57 })
+    Ui.label(string.format("%d item%s ready to review", Procurement.cartCount(state),
+        Procurement.cartCount(state) == 1 and "" or "s"), 470, 205, 190,
+        { 0.58, 0.72, 0.72 }, "right")
+    if #items == 0 then
+        Ui.label("Your cart is empty. Add parts from the inventory list.", LIST.x, 278,
+            LIST.width, { 0.56, 0.64, 0.62 }, "center")
+    else
+        for index, entry in ipairs(items) do
+            local rect = partRect(index)
+            local minus, plus = cartAdjustRect(index, "remove"), cartAdjustRect(index, "add")
+            love.graphics.setColor(0.05, 0.13, 0.16, 0.94)
+            love.graphics.rectangle("fill", rect.x, rect.y, rect.width, rect.height, 3, 3)
+            Ui.label(entry.item.label, rect.x + 10, rect.y + 7, 158, { 0.82, 0.88, 0.84 })
+            Ui.label(Ui.money(entry.item.cost) .. " each", rect.x + 10, rect.y + 27, 158,
+                { 0.58, 0.72, 0.72 })
+            Ui.button(minus.x, minus.y, minus.width, minus.height, "REMOVE", nil,
+                mouseX, mouseY, true)
+            Ui.label("x" .. entry.quantity, rect.x + 236, rect.y + 18, 32,
+                { 0.90, 0.84, 0.57 }, "center")
+            Ui.button(plus.x, plus.y, plus.width, plus.height, "+", nil,
+                mouseX, mouseY, true)
+            Ui.label(Ui.money(entry.total), rect.x + 304, rect.y + 18, 36,
+                { 0.55, 0.90, 0.70 }, "right")
+        end
+    end
+    love.graphics.setColor(0.24, 0.57, 0.68)
+    love.graphics.line(470, 488, 818, 488)
+    Ui.label("ORDER TOTAL", 470, 496, 150, { 0.90, 0.84, 0.57 })
+    Ui.label(Ui.money(total), 660, 496, 158, { 0.55, 0.90, 0.70 }, "right")
+    Ui.button(CART_BACK.x, CART_BACK.y, CART_BACK.width, CART_BACK.height,
+        "BACK TO PARTS", nil, mouseX, mouseY, true)
+    Ui.button(CART_BUY.x, CART_BUY.y, CART_BUY.width, CART_BUY.height,
+        "BUY / PLACE ORDER", nil, mouseX, mouseY, total > 0 and total <= state.money)
+end
+
 local function drawParts(state, mouseX, mouseY)
     Procurement.ensure(state)
+    if ComputerScreen.cartOpen then drawCart(state, mouseX, mouseY); return end
     Ui.label("MOTORCYCLE PARTS INVENTORY  •  TRUCK DELIVERY", LIST.x, 205,
-        LIST.width, { 0.90, 0.84, 0.57 })
+        520, { 0.90, 0.84, 0.57 })
+    Ui.button(PARTS_CART.x, PARTS_CART.y, PARTS_CART.width, PARTS_CART.height,
+        string.format("CART (%d)", Procurement.cartCount(state)), nil, mouseX, mouseY, true)
     for index, item in ipairs(Catalog.all()) do
         local rect, buy = partRect(index), partBuyRect(index)
         love.graphics.setColor(0.05, 0.13, 0.16, 0.94)
@@ -180,8 +272,10 @@ local function drawParts(state, mouseX, mouseY)
         Ui.label(item.label, rect.x + 10, rect.y + 7, 226, { 0.82, 0.88, 0.84 })
         Ui.label(string.format("IN STOCK %d  •  %s", Procurement.quantity(state, item.kind),
             Ui.money(item.cost)), rect.x + 10, rect.y + 27, 226, { 0.58, 0.72, 0.72 })
-        Ui.button(buy.x, buy.y, buy.width, buy.height, "ORDER", nil, mouseX, mouseY,
-            state.money >= item.cost)
+        local cartQuantity = Procurement.cartQuantity(state, item.kind)
+        Ui.button(buy.x, buy.y, buy.width, buy.height,
+            cartQuantity > 0 and ("ADD  " .. cartQuantity) or "ADD", nil, mouseX, mouseY,
+            Procurement.cartTotal(state) + item.cost <= state.money)
     end
     Ui.label("HOW: Order the kit named by the service bay. Wait for the delivery truck, open its rear cargo door, then RECEIVE the package.",
         LIST.x, 526, LIST.width, { 0.90, 0.76, 0.36 }, "center")
@@ -215,7 +309,10 @@ function ComputerScreen.draw(state, mouseX, mouseY)
         if ComputerScreen.tab == "active" or ComputerScreen.tab == "completed" then
             drawJobList(state, mouseX, mouseY)
         elseif ComputerScreen.tab == "parts" then drawParts(state, mouseX, mouseY)
-        elseif ComputerScreen.tab == "customers" then drawCustomers(state) else drawFinances(state) end
+        elseif ComputerScreen.tab == "customers" then drawCustomers(state)
+        elseif ComputerScreen.tab == "calendar" then drawCalendar(state)
+        elseif ComputerScreen.tab == "email" then drawEmail(state)
+        else drawFinances(state) end
     end
     BackButton.draw(CLOSE, "CLOSE", mouseX, mouseY)
 end
@@ -239,12 +336,48 @@ function ComputerScreen.mousepressed(state, x, y, button)
         if Ui.contains(tab.x, 154, tab.width, 36, x, y) then return selectTab(tab.id) end
     end
     if ComputerScreen.tab == "parts" then
-        for index, item in ipairs(Catalog.all()) do
-            if contains(partBuyRect(index), x, y) then
-                local ok, result = Procurement.orderDelivery(state, item.kind)
-                return { action = ok and "part_purchased" or "blocked", result = result,
+        if contains(PARTS_CART, x, y) then
+            ComputerScreen.cartOpen = true
+            return { action = "cart_open" }
+        end
+        if ComputerScreen.cartOpen then
+            if contains(CART_BACK, x, y) then
+                ComputerScreen.cartOpen = false
+                return { action = "cart_back" }
+            end
+            local items = Procurement.cartItems(state)
+            if contains(CART_BUY, x, y) then
+                local ok, result = Procurement.checkoutCart(state)
+                if ok then ComputerScreen.cartOpen = false end
+                return { action = ok and "cart_purchased" or "blocked", result = result,
                     saveNeeded = ok }
             end
+            for index, entry in ipairs(items) do
+                local minus, plus = cartAdjustRect(index, "remove"), cartAdjustRect(index, "add")
+                if contains(minus, x, y) then
+                    local ok, result = Procurement.removeFromCart(state, entry.item.kind)
+                    return { action = ok and "cart_changed" or "blocked", result = result,
+                        saveNeeded = ok }
+                elseif contains(plus, x, y) then
+                    local ok, result = Procurement.addToCart(state, entry.item.kind)
+                    return { action = ok and "cart_changed" or "blocked", result = result,
+                        saveNeeded = ok }
+                end
+            end
+            return nil
+        end
+        for index, item in ipairs(Catalog.all()) do
+            if contains(partBuyRect(index), x, y) then
+                local ok, result = Procurement.addToCart(state, item.kind)
+                return { action = ok and "cart_changed" or "blocked", result = result,
+                    saveNeeded = ok }
+            end
+        end
+    end
+    if ComputerScreen.tab == "email" then
+        local inbox = ClientEmail.inbox(state)
+        for index = 1, math.min(#inbox, LIST.visibleRows) do
+            if contains(rowRect(index), x, y) then ClientEmail.markRead(state, inbox[index].id); return { action = "email_read", saveNeeded = true } end
         end
     end
     if ComputerScreen.tab == "active" or ComputerScreen.tab == "completed" then
@@ -295,7 +428,7 @@ end
 
 function ComputerScreen.snapshot()
     return { tab = ComputerScreen.tab, selectedJobId = ComputerScreen.selectedJobId,
-        cursorRow = ComputerScreen.cursorRow }
+        cursorRow = ComputerScreen.cursorRow, cartOpen = ComputerScreen.cartOpen }
 end
 
 return ComputerScreen

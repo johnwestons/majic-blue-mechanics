@@ -1,8 +1,12 @@
 local Ui = require("src.screens.ui")
+local Calendar = require("src.business_calendar")
+
+local InteractionBeacon = require("src.interaction_beacon")
 
 local Hud = {}
 
-function Hud.draw(state, prompt)
+function Hud.draw(state, prompt, inputMode)
+    prompt = InteractionBeacon.formatPrompt(prompt, inputMode)
     love.graphics.setColor(0.025, 0.035, 0.04, 0.90)
     love.graphics.rectangle("fill", 16, 14, 360, 64, 5, 5)
     love.graphics.setColor(0.25, 0.58, 0.66)

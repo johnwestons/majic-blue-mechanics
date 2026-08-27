@@ -362,7 +362,10 @@ function App.draw()
     else
         World.draw(Assets, CharacterAssets, state)
         if state.screen == "world" then
-            Hud.draw(state, World.prompt())
+        local inputMode = mobileControls and mobileControls:isEnabled() and "mobile"
+            or controller and controller:isActive() and "controller"
+            or "mouse"
+        Hud.draw(state, World.prompt(), inputMode)
         elseif state.screen == "job_offer" then
             JobOfferScreen.draw(state, Assets, mouseX, mouseY)
         elseif state.screen == "computer" then

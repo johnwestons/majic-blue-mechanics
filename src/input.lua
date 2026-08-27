@@ -206,6 +206,11 @@ function Input.mousepressed(x, y, button, context)
     local state = context.state
     if state.screen == "title" then
         return context.title.mousepressed(x, y, button)
+    elseif state.screen == "world" then
+        local selected = context.world.currentInteraction()
+        if selected and selected.hovered then
+            return Input.keypressed("e", context)
+        end
     elseif state.screen == "job_offer" then
         local action = context.jobOfferScreen.hit(x, y)
         if action == "accept" then return accept(context) end

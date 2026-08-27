@@ -2,6 +2,7 @@ local Config = require("src.config")
 local Jobs = require("src.jobs")
 local DeliveryVehicle = require("src.delivery_vehicle")
 local MotorcycleTransport = require("src.motorcycle_transport")
+local InteractionBeacon = require("src.interaction_beacon")
 
 local Renderer = {}
 
@@ -140,7 +141,13 @@ function Renderer.draw(world, assets, characterAssets, state)
             draw = function() world.customer:draw(characterAssets) end }
     end
     table.sort(actors, function(a, b) return a.y < b.y end)
+    InteractionBeacon.drawUnderlay(world.currentInteraction(), world.player.animationClock, {
+        player = world.player,
+    })
     for _, actor in ipairs(actors) do actor.draw() end
+    InteractionBeacon.drawOverlay(world.currentInteraction(), world.player.animationClock, {
+        player = world.player,
+    })
 end
 
 return Renderer

@@ -3,6 +3,7 @@ local CharacterAnimation = require("src.character_animation")
 local BayDoor = require("src.bay_door")
 local Customer = require("src.customer")
 local Interaction = require("src.interaction")
+local InteractionBeacon = require("src.interaction_beacon")
 local JobService = require("src.job_service")
 local Navigation = require("src.navigation")
 local DeliveryVehicle = require("src.delivery_vehicle")
@@ -209,7 +210,14 @@ function World.update(dt, directionX, directionY, assets, state)
     elseif event == "exited" then
         World.customer:reset()
     end
-    World.selectedInteraction = Interaction.nearest(player, targets(state), World.cursorX, World.cursorY)
+    World.selectedInteraction = Interaction.nearest(
+        player,
+        targets(state),
+        World.cursorX,
+        World.cursorY,
+        World.selectedInteraction,
+        { stickiness = 14, facingWeight = 9, releaseScale = 1.18 }
+    )
     state.player = World.snapshot()
     return event, ownerPickupCompleted == true
 end
@@ -219,12 +227,16 @@ function World.setCursor(x, y)
 end
 
 function World.interact(state)
-    World.triggerUseAnimation()
     local selected = World.selectedInteraction
     if not selected then
         state.message = "Move closer to something you can use."
         return false
     end
+    if selected.x ~= World.player.x then
+        World.player.facing = selected.x < World.player.x and -1 or 1
+    end
+    InteractionBeacon.notifyActivated(selected)
+    World.triggerUseAnimation()
     if selected.kind == "computer" then
         state.screen = "computer"
         return true
@@ -273,6 +285,10 @@ end
 
 function World.prompt()
     return World.selectedInteraction and World.selectedInteraction.prompt or nil
+end
+
+function World.currentInteraction()
+    return World.selectedInteraction
 end
 
 function World.currentJob(state) return currentJob(state) end

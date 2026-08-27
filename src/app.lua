@@ -306,6 +306,11 @@ function App.load()
 end
 
 function App.update(dt)
+    local pointerX, pointerY = love.mouse.getPosition()
+    pointerX, pointerY = Viewport.toGame(pointerX, pointerY, Config.baseWidth, Config.baseHeight)
+    local pointerCamera = currentCamera()
+    if pointerCamera then pointerX, pointerY = pointerCamera:screenToWorld(pointerX, pointerY) end
+    World.setCursor(pointerX, pointerY)
     BusinessCalendar.update(state, dt)
     ClientEmail.update(state)
     if mobileControls then mobileControls:update(dt) end

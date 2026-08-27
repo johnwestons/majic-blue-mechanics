@@ -1,4 +1,5 @@
 local Config = require("src.config")
+local CharacterAnimation = require("src.character_animation")
 local BayDoor = require("src.bay_door")
 local Customer = require("src.customer")
 local Interaction = require("src.interaction")
@@ -9,6 +10,8 @@ local Procurement = require("src.procurement")
 local MotorcycleTransport = require("src.motorcycle_transport")
 local WorldRenderer = require("src.world_renderer")
 
+local USE_ANIMATION_DURATION = 1.0
+
 local World = {
     player = {
         x = Config.player.spawnX,
@@ -16,11 +19,15 @@ local World = {
         speed = Config.player.speed,
         moving = false,
         facing = 1,
+        animationAction = "idle",
         animationClock = 0,
+        useTimer = 0,
     },
     customer = Customer.new(Config.customer),
     bayDoor = BayDoor.new(Config.loadingBay),
     selectedInteraction = nil,
+    cursorX = nil,
+    cursorY = nil,
 }
 
 local function currentJob(state) return JobService.currentJob(state) end
@@ -77,20 +84,42 @@ local function targets(state)
     return result
 end
 
-function World.load(playerPayload, customerPayload, deliveryPayload)
+function World.load(playerPayload, customerPayload, deliveryPayload, transportPayload)
     World.player.x = playerPayload and playerPayload.x or Config.player.spawnX
     World.player.y = playerPayload and playerPayload.y or Config.player.spawnY
     World.player.facing = playerPayload and playerPayload.facing or 1
     World.player.moving = false
-    World.player.animationClock = 0
+    World.player.useTimer = 0
+    CharacterAnimation.reset(World.player, "idle")
     World.selectedInteraction = nil
     World.bayDoor:reset()
     local deliveryState = deliveryPayload and deliveryPayload.state
-    if deliveryState and deliveryState ~= "absent" and deliveryState ~= "scheduled" then
+    local transportState = transportPayload and transportPayload.state
+    if (deliveryState and deliveryState ~= "absent" and deliveryState ~= "scheduled")
+        or (transportState and transportState ~= "absent"
+            and transportState ~= "scheduled")
+    then
         World.bayDoor:holdOpen()
     end
     World.customer:reset(nil, true)
     if customerPayload then World.customer:restore(customerPayload) end
+end
+
+function World.playerAnimationAction()
+    if math.max(0, tonumber(World.player.useTimer) or 0) > 0 then return "use" end
+    return World.player.moving and "walk" or "idle"
+end
+
+function World.updatePlayerAnimation(dt)
+    local elapsed = math.max(0, tonumber(dt) or 0)
+    World.player.useTimer = math.max(0,
+        (tonumber(World.player.useTimer) or 0) - elapsed)
+    return CharacterAnimation.advance(World.player, World.playerAnimationAction(), elapsed)
+end
+
+function World.triggerUseAnimation()
+    World.player.useTimer = USE_ANIMATION_DURATION
+    CharacterAnimation.reset(World.player, "use")
 end
 
 function World.snapshot()
@@ -99,7 +128,10 @@ end
 
 function World.update(dt, directionX, directionY, assets, state)
     Procurement.ensure(state)
-    DeliveryVehicle.schedule(state, state.procurement, Config.partsDelivery)
+    local transport = MotorcycleTransport.ensure(state)
+    if transport.state == "absent" then
+        DeliveryVehicle.schedule(state, state.procurement, Config.partsDelivery)
+    end
     local doorEvent = World.bayDoor:update(dt)
     if doorEvent == "opened" then
         state.message = "Loading dock door open. The truck can back into the bay."
@@ -122,8 +154,9 @@ function World.update(dt, directionX, directionY, assets, state)
         state.message = "The parts delivery truck has left the workshop."
         if World.bayDoor.state == "open" then World.bayDoor:close() end
     end
-    local transport = MotorcycleTransport.ensure(state)
-    if transport.state == "absent" then
+    transport = MotorcycleTransport.ensure(state)
+    local delivery = DeliveryVehicle.ensure(state)
+    if transport.state == "absent" and delivery.state == "absent" then
         for _, job in ipairs(state.jobs.active or {}) do
             if job.transportRequired and (job.stage == "awaiting_dropoff"
                 or job.stage == "pickup_transport") then
@@ -134,18 +167,27 @@ function World.update(dt, directionX, directionY, assets, state)
             end
         end
     end
-    local transportEvent = MotorcycleTransport.update(state, dt, Config.motorcycleTransport)
-    if transportEvent == "parked" then
+    local transportEvent = MotorcycleTransport.update(state, dt,
+        Config.motorcycleTransport, World.bayDoor.state)
+    if transportEvent == "request_bay_open" then
+        if World.bayDoor.state == "closed" then World.bayDoor:open() end
+        state.message = "Motorcycle flatbed arrived. Opening the loading dock door..."
+    elseif transportEvent == "backing_started" then
+        state.message = "The motorcycle flatbed is backing into the loading dock."
+    elseif transportEvent == "parked" then
         state.message = transport.mode == "inbound"
             and "The motorcycle flatbed is ready to unload."
             or "The return flatbed is ready to load the finished motorcycle."
+    elseif transportEvent == "departed" then
+        state.message = "The motorcycle flatbed has left the workshop."
+        if World.bayDoor.state == "open" then World.bayDoor:close() end
     end
     local ownerPickupCompleted = JobService.updateOwnerPickups(state, dt,
         Config.motorcycleTransport.ownerPickupDelay)
     local player = World.player
-    player.animationClock = player.animationClock + math.max(0, dt or 0)
     local length = math.sqrt(directionX * directionX + directionY * directionY)
     player.moving = length > 0
+    World.updatePlayerAnimation(dt)
     if length > 0 then
         local normalizedX, normalizedY = directionX / length, directionY / length
         local nextX = player.x + normalizedX * player.speed * dt
@@ -167,12 +209,17 @@ function World.update(dt, directionX, directionY, assets, state)
     elseif event == "exited" then
         World.customer:reset()
     end
-    World.selectedInteraction = Interaction.nearest(player, targets(state))
+    World.selectedInteraction = Interaction.nearest(player, targets(state), World.cursorX, World.cursorY)
     state.player = World.snapshot()
     return event, ownerPickupCompleted == true
 end
 
+function World.setCursor(x, y)
+    World.cursorX, World.cursorY = x, y
+end
+
 function World.interact(state)
+    World.triggerUseAnimation()
     local selected = World.selectedInteraction
     if not selected then
         state.message = "Move closer to something you can use."
@@ -183,9 +230,9 @@ function World.interact(state)
         return true
     elseif selected.kind == "customer" then
         if not World.customer:beginReview() and World.customer.state ~= "reviewing" then return false end
-        JobService.prepareOffer(state)
+        local _, created = JobService.prepareOffer(state)
         state.screen = "job_offer"
-        return true
+        return true, created
     elseif selected.kind == "service_bay" then
         state.selectedJobId = selected.jobId
         state.screen = "service"
@@ -238,7 +285,10 @@ function World.closePartsVan(state)
 end
 
 function World.toggleBayDoor(state)
-    if World.bayDoor.state == "open" and DeliveryVehicle.blocksBayClosure(state) then
+    if World.bayDoor.state == "open"
+        and (DeliveryVehicle.blocksBayClosure(state)
+            or MotorcycleTransport.blocksBayClosure(state))
+    then
         if state then state.message = "The truck is occupying the dock. Keep the loading door open." end
         return false
     end
@@ -257,7 +307,10 @@ function World.bayDoorSnapshot() return World.bayDoor:snapshot() end
 
 function World.syncDeliveryDoor(state)
     local delivery = DeliveryVehicle.ensure(state)
-    if delivery.state ~= "absent" and delivery.state ~= "scheduled" then
+    local transport = MotorcycleTransport.ensure(state)
+    if (delivery.state ~= "absent" and delivery.state ~= "scheduled")
+        or (transport.state ~= "absent" and transport.state ~= "scheduled")
+    then
         World.bayDoor:holdOpen()
     end
 end
